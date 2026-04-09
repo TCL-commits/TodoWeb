@@ -1,0 +1,64 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Workspace | Think-Calc-Loop</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app-bg">
+    <div class="page-shell">
+      <header class="topbar topbar--compact">
+        <a class="brand" th:href="@{/workspaces}">
+          <span class="brand-mark">T</span>
+          <span class="brand-text">
+            <span>Think-Calc-Loop</span>
+            <small>Create workspace</small>
+          </span>
+        </a>
+
+        <div class="topbar-actions">
+          <a class="button button-secondary" th:href="@{/workspaces}">Back</a>
+        </div>
+      </header>
+
+      <main class="page-content" style="max-width: 860px">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h1 class="panel-title">Create workspace</h1>
+              <p class="panel-copy">
+                Tạo một không gian làm việc mới để gom project và board.
+              </p>
+            </div>
+          </div>
+
+          <form action="/workspaces/create" method="post" class="form-grid">
+            <div class="field">
+              <label class="field-label" for="name">Workspace name</label>
+              <input
+                id="name"
+                type="text"
+                name="name"
+                placeholder="Ví dụ: Product Team"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="type">Workspace type</label>
+              <select id="type" name="type">
+                <option value="TEAM">TEAM</option>
+                <option value="PERSONAL">PERSONAL</option>
+              </select>
+            </div>
+
+            <button class="button button-primary" type="submit">
+              Create workspace
+            </button>
+          </form>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

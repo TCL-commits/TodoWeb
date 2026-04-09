@@ -1,0 +1,209 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Think-Calc-Loop</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app-bg">
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" th:href="@{/dashboard}">
+          <span class="brand-mark">T</span>
+          <span class="brand-text">
+            <span>Think-Calc-Loop</span>
+            <small>Trello-style workspace</small>
+          </span>
+        </a>
+
+        <form class="topbar-search" th:action="@{/search}" method="get">
+          <input
+            type="text"
+            name="q"
+            placeholder="Tìm workspace, project hoặc task"
+          />
+        </form>
+
+        <div class="topbar-actions">
+          <a class="button button-secondary" th:href="@{/workspaces}"
+            >Workspaces</a
+          >
+          <a class="button button-primary" th:href="@{/workspaces/create}"
+            >Create</a
+          >
+          <span
+            class="avatar-pill"
+            th:text="${username.length() >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase()}"
+          ></span>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <section class="hero">
+          <div class="hero-card">
+            <div class="hero-kicker">Personal dashboard</div>
+            <h1 class="hero-title">
+              Tổ chức mọi công việc theo kiểu board gọn, nhanh, rõ.
+            </h1>
+            <p class="hero-copy">
+              Quản lý workspace, project và task trong một giao diện sáng sủa,
+              dễ đọc và rất gần với Trello. Mọi thao tác đều được đặt ở vị trí
+              rõ ràng để bạn làm việc nhanh hơn.
+            </p>
+
+            <div class="hero-actions">
+              <a class="button button-primary" th:href="@{/workspaces/create}"
+                >Tạo workspace mới</a
+              >
+              <a class="button button-secondary" th:href="@{/workspaces}"
+                >Xem toàn bộ workspace</a
+              >
+            </div>
+          </div>
+
+          <aside class="hero-stats">
+            <div class="stat-card">
+              <div class="stat-label">Xin chào</div>
+              <div class="stat-value" th:text="${username}"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Workspace của bạn</div>
+              <div
+                class="stat-value"
+                th:text="${#lists.size(workspaces)}"
+              ></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total tasks</div>
+              <div class="stat-value" th:text="${totalTasks}"></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="card-grid" style="margin-bottom: 24px">
+          <article class="project-card">
+            <div class="workspace-chip">
+              <span>Report</span><span>Weekly</span>
+            </div>
+            <h3 class="project-title">Tasks completed</h3>
+            <p
+              class="project-copy"
+              th:text="${completedTasks} + ' task đã hoàn thành.'"
+            ></p>
+          </article>
+          <article class="project-card">
+            <div class="workspace-chip">
+              <span>Report</span><span>Risk</span>
+            </div>
+            <h3 class="project-title">Overdue</h3>
+            <p
+              class="project-copy"
+              th:text="${overdueTasks} + ' task quá hạn cần xử lý.'"
+            ></p>
+          </article>
+          <article class="project-card">
+            <div class="workspace-chip">
+              <span>Report</span><span>Trend</span>
+            </div>
+            <h3 class="project-title">7 ngày gần nhất</h3>
+            <p
+              class="project-copy"
+              th:text="${tasksThisWeek} + ' task mới được tạo.'"
+            ></p>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Thông báo</h2>
+              <p
+                class="section-subtitle"
+                th:text="${'Unread: ' + unreadNotifications}"
+              ></p>
+            </div>
+            <button
+              class="button button-secondary"
+              type="button"
+              onclick="generateDigest()"
+            >
+              Tạo digest quá hạn
+            </button>
+          </div>
+
+          <div
+            class="card-grid"
+            th:if="${!#lists.isEmpty(latestNotifications)}"
+          >
+            <article class="project-card" th:each="n : ${latestNotifications}">
+              <div class="workspace-chip">
+                <span th:text="${n.type}"></span>
+                <span th:text="${n.read ? 'Read' : 'Unread'}"></span>
+              </div>
+              <h3 class="project-title" th:text="${n.title}"></h3>
+              <p class="project-copy" th:text="${n.message}"></p>
+            </article>
+          </div>
+
+          <div
+            class="empty-state"
+            th:if="${#lists.isEmpty(latestNotifications)}"
+          >
+            Chưa có thông báo mới.
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Workspace gần đây</h2>
+              <p class="section-subtitle">
+                Chọn một workspace để mở project và board.
+              </p>
+            </div>
+            <a class="soft-link" th:href="@{/workspaces}"
+              >Mở danh sách đầy đủ</a
+            >
+          </div>
+
+          <div class="card-grid" th:if="${!#lists.isEmpty(workspaces)}">
+            <article class="workspace-card" th:each="ws : ${workspaces}">
+              <div class="workspace-chip">
+                <span>Workspace</span>
+                <span th:text="${ws.type != null ? ws.type : 'TEAM'}"></span>
+              </div>
+              <h3 class="workspace-title" th:text="${ws.name}"></h3>
+              <p class="workspace-copy">
+                Không gian làm việc để gom project, task và trạng thái theo một
+                board thống nhất.
+              </p>
+              <div class="card-actions">
+                <span class="muted">Ready to open</span>
+                <a
+                  class="card-link"
+                  th:href="@{'/workspaces/' + ${ws.id} + '/projects'}"
+                  >Open board</a
+                >
+              </div>
+            </article>
+          </div>
+
+          <div class="empty-state" th:if="${#lists.isEmpty(workspaces)}">
+            Chưa có workspace nào. Hãy tạo workspace đầu tiên để bắt đầu.
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      async function generateDigest() {
+        try {
+          await fetch("/notifications/digest/overdue", { method: "POST" });
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    </script>
+  </body>
+</html>

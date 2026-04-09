@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register | Think-Calc-Loop</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body class="auth-page">
+    <div class="auth-layout">
+      <aside class="auth-aside">
+        <div>
+          <div class="auth-identity">
+            <span class="brand-mark">T</span>
+            <span class="auth-badge">Think-Calc-Loop</span>
+          </div>
+          <h1 class="auth-title">
+            Bắt đầu một workspace được sắp xếp như Trello.
+          </h1>
+          <p class="auth-copy">
+            Tạo tài khoản để quản lý dự án, chia list theo trạng thái và mở
+            board theo phong cách hiện đại.
+          </p>
+        </div>
+
+        <div class="auth-points">
+          <div class="auth-point">
+            <span>+</span><span>Thiết lập nhanh trong vài bước</span>
+          </div>
+          <div class="auth-point">
+            <span>+</span><span>Giao diện rõ ràng, đồng nhất</span>
+          </div>
+          <div class="auth-point">
+            <span>+</span><span>Sẵn sàng mở rộng cho team</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="auth-card">
+        <h2>Tạo tài khoản</h2>
+        <p>Điền thông tin để bắt đầu.</p>
+
+        <div
+          class="empty-state"
+          th:if="${param.error != null and param.error[0] == 'username'}"
+        >
+          Username đã tồn tại. Vui lòng chọn username khác.
+        </div>
+
+        <div
+          class="empty-state"
+          th:if="${param.error != null and param.error[0] == 'email'}"
+        >
+          Email đã tồn tại. Vui lòng dùng email khác.
+        </div>
+
+        <form method="post" action="/register" class="auth-form">
+          <div class="field">
+            <label class="field-label" for="username">Username</label>
+            <input
+              class="auth-input"
+              id="username"
+              type="text"
+              name="username"
+              placeholder="Nhập username"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="email">Email</label>
+            <input
+              class="auth-input"
+              id="email"
+              type="email"
+              name="email"
+              placeholder="Nhập email"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="password">Password</label>
+            <input
+              class="auth-input"
+              id="password"
+              type="password"
+              name="password"
+              placeholder="Tạo mật khẩu"
+              required
+            />
+          </div>
+
+          <div class="auth-actions">
+            <button class="button button-primary" type="submit">Đăng ký</button>
+            <a class="auth-link" href="/login">Đã có tài khoản?</a>
+          </div>
+        </form>
+      </section>
+    </div>
+  </body>
+</html>

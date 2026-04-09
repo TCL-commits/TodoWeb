@@ -1,0 +1,82 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workspaces | Think-Calc-Loop</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app-bg">
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" th:href="@{/dashboard}">
+          <span class="brand-mark">T</span>
+          <span class="brand-text">
+            <span>Think-Calc-Loop</span>
+            <small>Workspace hub</small>
+          </span>
+        </a>
+
+        <form class="topbar-search" th:action="@{/search}" method="get">
+          <input type="text" name="q" placeholder="Tìm workspace" />
+        </form>
+
+        <div class="topbar-actions">
+          <a class="button button-secondary" th:href="@{/dashboard}"
+            >Dashboard</a
+          >
+          <a class="button button-primary" th:href="@{/workspaces/create}"
+            >Create workspace</a
+          >
+          <span
+            class="avatar-pill"
+            th:text="${username.length() >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase()}"
+          ></span>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title">Workspaces</h1>
+              <p
+                class="section-subtitle"
+                th:text="'Bạn đang có ' + ${#lists.size(workspaces)} + ' workspace.'"
+              ></p>
+            </div>
+            <a class="soft-link" th:href="@{/workspaces/create}"
+              >Tạo workspace mới</a
+            >
+          </div>
+
+          <div class="card-grid" th:if="${!#lists.isEmpty(workspaces)}">
+            <article class="workspace-card" th:each="ws : ${workspaces}">
+              <div class="workspace-chip">
+                <span th:text="${ws.type != null ? ws.type : 'TEAM'}"></span>
+                <span>Board space</span>
+              </div>
+              <h3 class="workspace-title" th:text="${ws.name}"></h3>
+              <p class="workspace-copy">
+                Quản lý project, task và trạng thái trong một không gian làm
+                việc gọn gàng.
+              </p>
+              <div class="card-actions">
+                <span class="muted">Sẵn sàng mở</span>
+                <a
+                  class="card-link"
+                  th:href="@{'/workspaces/' + ${ws.id} + '/projects'}"
+                  >Open</a
+                >
+              </div>
+            </article>
+          </div>
+
+          <div class="empty-state" th:if="${#lists.isEmpty(workspaces)}">
+            Chưa có workspace nào. Hãy tạo workspace đầu tiên để bắt đầu.
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

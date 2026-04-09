@@ -1,0 +1,84 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | Think-Calc-Loop</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="auth-page">
+    <div class="auth-layout">
+      <aside class="auth-aside">
+        <div>
+          <div class="auth-identity">
+            <span class="brand-mark">T</span>
+            <span class="auth-badge">Think-Calc-Loop</span>
+          </div>
+          <h1 class="auth-title">
+            Work like a Trello board, but tailored for your flow.
+          </h1>
+          <p class="auth-copy">
+            Đăng nhập để quản lý workspace, project và task trong giao diện gọn,
+            hiện đại và dễ theo dõi.
+          </p>
+        </div>
+
+        <div class="auth-points">
+          <div class="auth-point">
+            <span>1</span><span>Quản lý workspace rõ ràng</span>
+          </div>
+          <div class="auth-point">
+            <span>2</span><span>Kéo thả task giữa các list</span>
+          </div>
+          <div class="auth-point">
+            <span>3</span><span>Mở board và cập nhật nhanh</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="auth-card">
+        <h2>Đăng nhập</h2>
+        <p>Vào tài khoản để tiếp tục làm việc.</p>
+
+        <div class="empty-state" th:if="${param.error}">
+          Sai username hoặc password. Hãy kiểm tra lại thông tin đăng nhập.
+        </div>
+
+        <div class="empty-state" th:if="${param.logout}">
+          Bạn đã đăng xuất thành công.
+        </div>
+
+        <form method="post" th:action="@{/login}" class="auth-form">
+          <div class="field">
+            <label class="field-label" for="username">Username</label>
+            <input
+              class="auth-input"
+              id="username"
+              type="text"
+              name="username"
+              placeholder="Nhập username"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="password">Password</label>
+            <input
+              class="auth-input"
+              id="password"
+              type="password"
+              name="password"
+              placeholder="Nhập mật khẩu"
+            />
+          </div>
+
+          <div class="auth-actions">
+            <button class="button button-primary" type="submit">
+              Đăng nhập
+            </button>
+            <a class="auth-link" href="/register">Chưa có tài khoản?</a>
+          </div>
+        </form>
+      </section>
+    </div>
+  </body>
+</html>

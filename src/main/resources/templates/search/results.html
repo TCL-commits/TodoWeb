@@ -1,0 +1,164 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search | Think-Calc-Loop</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app-bg">
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" th:href="@{/dashboard}">
+          <span class="brand-mark">T</span>
+          <span class="brand-text">
+            <span>Think-Calc-Loop</span>
+            <small>Search results</small>
+          </span>
+        </a>
+
+        <form class="topbar-search" th:action="@{/search}" method="get">
+          <input
+            type="text"
+            name="q"
+            th:value="${query}"
+            placeholder="Tìm workspace, project hoặc task"
+          />
+        </form>
+
+        <div class="topbar-actions">
+          <a class="button button-secondary" th:href="@{/dashboard}"
+            >Dashboard</a
+          >
+          <span
+            class="avatar-pill"
+            th:text="${username.length() >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase()}"
+          ></span>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <section class="hero">
+          <div class="hero-card">
+            <div class="hero-kicker">Search</div>
+            <h1 class="hero-title">
+              Kết quả cho: <span th:text="${query}"></span>
+            </h1>
+            <p class="hero-copy">
+              Tìm thấy <strong th:text="${totalCount}"></strong> kết quả trong
+              workspace, project và task.
+            </p>
+            <p class="muted" th:text="${searchHint}"></p>
+          </div>
+          <aside class="hero-stats">
+            <div class="stat-card">
+              <div class="stat-label">Workspaces</div>
+              <div
+                class="stat-value"
+                th:text="${#lists.size(workspaces)}"
+              ></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Projects</div>
+              <div class="stat-value" th:text="${#lists.size(projects)}"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Tasks</div>
+              <div class="stat-value" th:text="${#lists.size(tasks)}"></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Workspaces</h2>
+            </div>
+          </div>
+          <div class="card-grid" th:if="${!#lists.isEmpty(workspaces)}">
+            <article class="workspace-card" th:each="ws : ${workspaces}">
+              <h3 class="workspace-title" th:text="${ws.name}"></h3>
+              <div class="card-actions">
+                <span class="muted">Workspace</span>
+                <a
+                  class="card-link"
+                  th:href="@{'/workspaces/' + ${ws.id} + '/projects'}"
+                  >Open</a
+                >
+              </div>
+            </article>
+          </div>
+          <div class="empty-state" th:if="${#lists.isEmpty(workspaces)}">
+            Không có workspace phù hợp.
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Projects</h2>
+            </div>
+          </div>
+          <div class="card-grid" th:if="${!#lists.isEmpty(projects)}">
+            <article class="project-card" th:each="p : ${projects}">
+              <h3 class="project-title" th:text="${p.name}"></h3>
+              <p
+                class="project-copy"
+                th:text="${!#strings.isEmpty(p.description) ? p.description : 'Không có mô tả.'}"
+              ></p>
+              <div class="card-actions">
+                <span class="muted" th:text="${p.workspace.name}"></span>
+                <a
+                  class="card-link"
+                  th:href="@{'/projects/' + ${p.id} + '/tasks'}"
+                  >Open board</a
+                >
+              </div>
+            </article>
+          </div>
+          <div class="empty-state" th:if="${#lists.isEmpty(projects)}">
+            Không có project phù hợp.
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Tasks</h2>
+            </div>
+          </div>
+          <div class="card-grid" th:if="${!#lists.isEmpty(tasks)}">
+            <article class="project-card" th:each="t : ${tasks}">
+              <h3 class="project-title" th:text="${t.title}"></h3>
+              <p
+                class="project-copy"
+                th:text="${!#strings.isEmpty(t.description) ? t.description : 'Không có mô tả.'}"
+              ></p>
+              <p
+                class="muted"
+                th:if="${t.dueDate != null}"
+                th:text="${'Due: ' + t.dueDate}"
+              ></p>
+              <p
+                class="muted"
+                th:if="${t.status != null}"
+                th:text="${'Status: ' + t.status.name}"
+              ></p>
+              <div class="card-actions">
+                <span class="muted" th:text="${t.project.name}"></span>
+                <a
+                  class="card-link"
+                  th:href="@{'/projects/' + ${t.project.id} + '/tasks'}"
+                  >Open board</a
+                >
+              </div>
+            </article>
+          </div>
+          <div class="empty-state" th:if="${#lists.isEmpty(tasks)}">
+            Không có task phù hợp.
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

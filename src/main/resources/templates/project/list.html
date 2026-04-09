@@ -1,0 +1,280 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projects | Think-Calc-Loop</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app-bg">
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" th:href="@{/dashboard}">
+          <span class="brand-mark">T</span>
+          <span class="brand-text">
+            <span>Think-Calc-Loop</span>
+            <small th:text="${workspace.name}"></small>
+          </span>
+        </a>
+
+        <form class="topbar-search" th:action="@{/search}" method="get">
+          <input type="text" name="q" placeholder="Tìm project" />
+        </form>
+
+        <div class="topbar-actions">
+          <a class="button button-secondary" th:href="@{/workspaces}"
+            >Workspaces</a
+          >
+          <span
+            class="avatar-pill"
+            th:text="${username.length() >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase()}"
+          ></span>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <section class="hero">
+          <div class="hero-card">
+            <div class="hero-kicker">Workspace</div>
+            <h1 class="hero-title" th:text="${workspace.name}"></h1>
+            <p class="hero-copy">
+              Tạo và mở project trong workspace này. Mỗi project sẽ có board,
+              list và card theo kiểu Trello.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-secondary" th:href="@{/workspaces}"
+                >Back to workspaces</a
+              >
+            </div>
+          </div>
+
+          <aside class="hero-stats">
+            <div class="stat-card">
+              <div class="stat-label">Projects</div>
+              <div class="stat-value" th:text="${#lists.size(projects)}"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Members</div>
+              <div class="stat-value" th:text="${#lists.size(members)}"></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Create project</h2>
+              <p class="section-subtitle">
+                Đặt tên và mô tả để bắt đầu board mới.
+              </p>
+            </div>
+          </div>
+
+          <section class="panel" style="margin-bottom: 20px">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title" style="font-size: 1.25rem">
+                  Thêm thành viên vào workspace
+                </h2>
+                <p class="panel-copy">
+                  Nhập email tài khoản đã đăng ký để thêm vào workspace và giao
+                  việc trong board.
+                </p>
+              </div>
+            </div>
+
+            <div class="empty-state" th:if="${param.memberAdded}">
+              Đã thêm thành viên thành công.
+            </div>
+
+            <div
+              class="empty-state"
+              th:if="${param.memberError != null and param.memberError[0] == 'notfound'}"
+            >
+              Không tìm thấy tài khoản theo email này.
+            </div>
+
+            <div
+              class="empty-state"
+              th:if="${param.memberError != null and param.memberError[0] == 'exists'}"
+            >
+              Người dùng này đã là thành viên workspace.
+            </div>
+
+            <div
+              class="empty-state"
+              th:if="${param.memberError != null and param.memberError[0] == 'empty'}"
+            >
+              Vui lòng nhập email hợp lệ.
+            </div>
+
+            <div
+              class="empty-state"
+              th:if="${param.memberError != null and param.memberError[0] == 'forbidden'}"
+            >
+              Bạn không có quyền quản lý thành viên trong workspace này.
+            </div>
+
+            <div class="empty-state" th:if="${param.memberRoleUpdated}">
+              Đã cập nhật quyền thành viên.
+            </div>
+
+            <form
+              th:if="${canManage}"
+              th:action="@{'/workspaces/' + ${workspace.id} + '/add-member'}"
+              method="post"
+              class="form-grid"
+            >
+              <div class="field">
+                <label class="field-label" for="memberEmail">
+                  Email thành viên
+                </label>
+                <input
+                  id="memberEmail"
+                  name="email"
+                  type="email"
+                  placeholder="member@example.com"
+                  required
+                />
+              </div>
+
+              <button class="button button-primary" type="submit">
+                Thêm thành viên
+              </button>
+            </form>
+
+            <div class="section" style="margin-top: 16px">
+              <div class="section-header" style="margin-bottom: 10px">
+                <h3 class="section-title" style="font-size: 1rem">
+                  Thành viên hiện tại
+                </h3>
+              </div>
+
+              <div class="card-grid" th:if="${!#lists.isEmpty(members)}">
+                <article class="project-card" th:each="m : ${members}">
+                  <div class="workspace-chip">
+                    <span
+                      th:text="${m.user.username.length() >= 2 ? m.user.username.substring(0, 2).toUpperCase() : m.user.username.toUpperCase()}"
+                    ></span>
+                    <span th:text="${m.role}"></span>
+                  </div>
+                  <h3 class="project-title" th:text="${m.user.username}"></h3>
+                  <p
+                    class="project-copy"
+                    th:text="${m.user.email != null ? m.user.email : 'Không có email'}"
+                  ></p>
+                  <form
+                    th:if="${canManage}"
+                    th:action="@{'/workspaces/' + ${workspace.id} + '/members/' + ${m.id} + '/role'}"
+                    method="post"
+                    class="mobile-stack"
+                  >
+                    <select name="role" class="role-select">
+                      <option value="ADMIN" th:selected="${m.role == 'ADMIN'}">
+                        ADMIN
+                      </option>
+                      <option
+                        value="MEMBER"
+                        th:selected="${m.role == 'MEMBER'}"
+                      >
+                        MEMBER
+                      </option>
+                      <option
+                        value="VIEWER"
+                        th:selected="${m.role == 'VIEWER'}"
+                      >
+                        VIEWER
+                      </option>
+                    </select>
+                    <button class="button button-secondary" type="submit">
+                      Cập nhật quyền
+                    </button>
+                  </form>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" style="margin-bottom: 20px">
+            <form
+              th:if="${canManage}"
+              th:action="@{'/workspaces/' + ${workspace.id} + '/projects'}"
+              th:object="${project}"
+              method="post"
+              class="form-grid"
+            >
+              <div class="field">
+                <label class="field-label" for="projectName"
+                  >Project name</label
+                >
+                <input
+                  id="projectName"
+                  type="text"
+                  th:field="*{name}"
+                  placeholder="Ví dụ: Mobile App"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="projectDescription"
+                  >Description</label
+                >
+                <textarea
+                  id="projectDescription"
+                  th:field="*{description}"
+                  placeholder="Mô tả ngắn cho project"
+                ></textarea>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="templateKey"
+                  >Template board</label
+                >
+                <select id="templateKey" name="templateKey">
+                  <option value="kanban-basic">Kanban basic</option>
+                  <option value="sprint">Sprint team</option>
+                  <option value="marketing">Marketing flow</option>
+                </select>
+              </div>
+
+              <button class="button button-primary" type="submit">
+                Create project
+              </button>
+            </form>
+
+            <div class="empty-state" th:if="${!canManage}">
+              Bạn chỉ có quyền xem workspace này (VIEWER).
+            </div>
+          </section>
+
+          <div class="card-grid" th:if="${!#lists.isEmpty(projects)}">
+            <article class="project-card" th:each="p : ${projects}">
+              <div class="workspace-chip">
+                <span>Project</span>
+                <span>Board ready</span>
+              </div>
+              <h3 class="project-title" th:text="${p.name}"></h3>
+              <p
+                class="project-copy"
+                th:text="${!#strings.isEmpty(p.description) ? p.description : 'Chưa có mô tả cho project này.'}"
+              ></p>
+              <div class="card-actions">
+                <span class="muted">Open the board</span>
+                <a
+                  class="card-link"
+                  th:href="@{'/projects/' + ${p.id} + '/tasks'}"
+                  >Open</a
+                >
+              </div>
+            </article>
+          </div>
+
+          <div class="empty-state" th:if="${#lists.isEmpty(projects)}">
+            Workspace này chưa có project nào. Tạo project đầu tiên để bắt đầu.
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

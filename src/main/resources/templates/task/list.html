@@ -1,0 +1,1240 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${project.name + ' | Think-Calc-Loop'}">
+      Board | Think-Calc-Loop
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  </head>
+  <body class="app-bg">
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" th:href="@{/dashboard}">
+          <span class="brand-mark">T</span>
+          <span class="brand-text">
+            <span>Think-Calc-Loop</span>
+            <small>Board view</small>
+          </span>
+        </a>
+
+        <form class="topbar-search" th:action="@{/search}" method="get">
+          <input type="text" name="q" placeholder="Tìm task trong board" />
+        </form>
+
+        <div class="topbar-actions">
+          <a
+            class="button button-secondary"
+            th:href="@{'/workspaces/' + ${workspace.id} + '/projects'}"
+            >Projects</a
+          >
+          <a class="button button-primary" th:href="@{/workspaces}"
+            >Workspaces</a
+          >
+          <span
+            class="avatar-pill"
+            th:text="${username.length() >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase()}"
+          ></span>
+        </div>
+      </header>
+
+      <main class="board-shell">
+        <section class="board-hero">
+          <div class="board-hero-main">
+            <div class="breadcrumb" th:text="${workspace.name}"></div>
+            <h1 class="board-title" th:text="${project.name}"></h1>
+            <p
+              class="board-subtitle"
+              th:text="${!#strings.isEmpty(project.description) ? project.description : 'Board phong cách Trello cho project này.'}"
+            ></p>
+          </div>
+
+          <div class="board-hero-actions">
+            <div class="board-action-group">
+              <a
+                class="button button-secondary"
+                th:href="@{'/workspaces/' + ${workspace.id} + '/projects'}"
+                >Back</a
+              >
+              <form
+                class="board-filter-form"
+                th:action="@{'/projects/' + ${project.id} + '/tasks'}"
+                method="get"
+              >
+                <label class="sr-only" for="viewFilter">Filter view</label>
+                <select id="viewFilter" name="view" class="action-select">
+                  <option value="all" th:selected="${view == 'all'}">
+                    All tasks
+                  </option>
+                  <option value="open" th:selected="${view == 'open'}">
+                    Open
+                  </option>
+                  <option value="done" th:selected="${view == 'done'}">
+                    Done
+                  </option>
+                  <option value="today" th:selected="${view == 'today'}">
+                    Due today
+                  </option>
+                  <option value="overdue" th:selected="${view == 'overdue'}">
+                    Overdue
+                  </option>
+                </select>
+                <button class="button button-secondary" type="submit">
+                  Apply
+                </button>
+              </form>
+            </div>
+
+            <div class="board-action-group">
+              <select id="bulkStatusId" class="action-select">
+                <option value="">Bulk move to...</option>
+                <option
+                  th:each="s : ${statuses}"
+                  th:value="${s.id}"
+                  th:text="${s.name}"
+                ></option>
+              </select>
+              <button
+                class="button button-secondary"
+                type="button"
+                onclick="bulkMoveSelected()"
+              >
+                Move selected
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="board-columns">
+          <article class="board-column" th:each="status : ${statuses}">
+            <div class="board-column-header">
+              <div>
+                <h3 class="board-column-title" th:text="${status.name}"></h3>
+                <div class="board-column-count">Kéo thẻ vào đây</div>
+              </div>
+
+              <div class="board-column-menu">
+                <button
+                  class="menu-icon"
+                  type="button"
+                  th:onclick="'toggleMenu(' + ${status.id} + ')'"
+                >
+                  ⋯
+                </button>
+                <div class="status-popup" th:id="'menu-' + ${status.id}">
+                  <div class="popup-title">
+                    Thao tác
+                    <span th:onclick="'closeMenu(' + ${status.id} + ')'"
+                      >×</span
+                    >
+                  </div>
+                  <div
+                    class="popup-item"
+                    th:onclick="'openAddCardForm(' + ${status.id} + ')'"
+                  >
+                    Thêm thẻ
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="board-column-cards" th:attr="id=${status.id}">
+              <article
+                th:each="t : ${tasksByStatus[status.id]}"
+                th:attr="data-id=${t.id}"
+                th:classappend="${t.completed} ? ' completed' : ''"
+                class="task-card"
+              >
+                <input
+                  type="checkbox"
+                  class="bulk-select"
+                  th:attr="data-id=${t.id}"
+                  onclick="event.stopPropagation()"
+                />
+                <div class="task-card-header">
+                  <button
+                    type="button"
+                    class="check-btn"
+                    th:attr="data-id=${t.id}"
+                  ></button>
+                  <div class="task-body">
+                    <h4 class="task-title" th:text="${t.title}"></h4>
+                    <p
+                      class="task-description"
+                      th:text="${!#strings.isEmpty(t.description) ? t.description : 'Không có mô tả.'}"
+                    ></p>
+                  </div>
+                </div>
+
+                <div class="task-meta">
+                  <div class="task-badges">
+                    <span
+                      class="badge badge-soft"
+                      th:text="${t.completed ? 'Done' : 'Open'}"
+                    ></span>
+                    <span
+                      class="badge badge-muted"
+                      th:text="${t.createdBy != null ? t.createdBy.username : 'System'}"
+                    ></span>
+                    <span
+                      class="badge badge-soft task-due-date"
+                      th:attr="data-task-id=${t.id}"
+                      th:style="${t.dueDate != null ? '' : 'display:none;'}"
+                      th:classappend="${t.dueDate != null and !t.completed and t.dueDate.isBefore(today)} ? ' badge-warning' : ''"
+                      th:text="${t.dueDate != null ? 'Due: ' + t.dueDate : ''}"
+                    ></span>
+                  </div>
+
+                  <span class="muted">Open card</span>
+                </div>
+              </article>
+            </div>
+
+            <div class="task-add-card" th:if="${canManage}">
+              <button
+                type="button"
+                class="add-card-trigger"
+                onclick="showForm(this)"
+              >
+                + Thêm thẻ
+              </button>
+              <form
+                th:action="@{/projects/{projectId}/tasks(projectId=${project.id})}"
+                method="post"
+                class="add-card-form hidden"
+              >
+                <input type="hidden" name="status.id" th:value="${status.id}" />
+                <textarea
+                  name="title"
+                  placeholder="Nhập tiêu đề..."
+                  required
+                ></textarea>
+                <div class="form-actions">
+                  <button class="button button-primary" type="submit">
+                    Thêm thẻ
+                  </button>
+                  <span class="inline-close" onclick="hideForm(this)">×</span>
+                </div>
+              </form>
+            </div>
+          </article>
+
+          <div class="board-add" th:if="${canManage}">
+            <div class="board-add-card">
+              <form
+                th:action="@{/workspaces/{wid}/projects/{pid}/status(wid=${project.workspace.id}, pid=${project.id})}"
+                method="post"
+                class="form-grid"
+              >
+                <div class="field">
+                  <label class="field-label" for="statusName"
+                    >Add another list</label
+                  >
+                  <input
+                    id="statusName"
+                    class="board-add-input"
+                    type="text"
+                    name="name"
+                    placeholder="Tên list mới"
+                    required
+                  />
+                </div>
+                <button class="button button-primary" type="submit">
+                  Add list
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div
+      id="taskModal"
+      class="board-modal"
+      onclick="if (event.target.id === 'taskModal') closeModal();"
+    >
+      <div class="board-modal-content">
+        <button type="button" class="modal-close" onclick="closeModal()">
+          ×
+        </button>
+
+        <div class="modal-main">
+          <div class="modal-title-row">
+            <button id="checkBtn" type="button" class="check-btn"></button>
+            <input
+              id="modalTitle"
+              class="modal-title-input"
+              onblur="saveTitle()"
+            />
+          </div>
+
+          <div class="mobile-stack">
+            <button
+              type="button"
+              class="button button-secondary"
+              onclick="focusDueDatePicker()"
+            >
+              Ngày
+            </button>
+            <button
+              type="button"
+              class="button button-secondary"
+              onclick="openMemberPopup()"
+            >
+              Thành viên
+            </button>
+          </div>
+
+          <div class="field" style="margin-top: 14px">
+            <label class="field-label" for="taskDueDate">Ngày hết hạn</label>
+            <input id="taskDueDate" type="date" onchange="saveDueDate()" />
+          </div>
+
+          <div class="modal-section">
+            <h4>Mô tả</h4>
+            <textarea
+              id="taskDescription"
+              onblur="saveDescription()"
+              class="modal-textarea"
+              placeholder="Thêm mô tả cho task này..."
+            ></textarea>
+          </div>
+
+          <div class="modal-section">
+            <h4>Ghi chú nhanh</h4>
+            <textarea
+              id="commentBox"
+              onblur="saveNotes()"
+              placeholder="Thêm ghi chú hoặc cập nhật ngắn..."
+            ></textarea>
+          </div>
+
+          <div class="modal-section">
+            <h4>Checklist</h4>
+            <div class="mobile-stack">
+              <input
+                id="checklistTitle"
+                type="text"
+                placeholder="Thêm checklist item"
+              />
+              <button
+                class="button button-secondary"
+                type="button"
+                onclick="addChecklistItem()"
+              >
+                Thêm
+              </button>
+            </div>
+            <div id="checklistItems" style="margin-top: 10px"></div>
+          </div>
+
+          <div class="modal-section">
+            <h4>Bình luận</h4>
+            <div class="mobile-stack">
+              <textarea
+                id="taskCommentInput"
+                placeholder="Viết bình luận"
+              ></textarea>
+              <button
+                class="button button-secondary"
+                type="button"
+                onclick="postComment()"
+              >
+                Gửi
+              </button>
+            </div>
+            <div id="commentTimeline" style="margin-top: 10px"></div>
+          </div>
+
+          <div class="modal-section">
+            <h4>Tệp đính kèm</h4>
+            <div class="mobile-stack">
+              <input id="attachmentInput" type="file" />
+              <button
+                class="button button-secondary"
+                type="button"
+                onclick="uploadAttachment()"
+              >
+                Upload
+              </button>
+            </div>
+            <div id="attachmentList" style="margin-top: 10px"></div>
+          </div>
+
+          <div class="modal-section">
+            <h4>Người xử lý</h4>
+            <div class="member-list" id="selectedMemberList"></div>
+          </div>
+        </div>
+
+        <aside class="modal-side">
+          <h4
+            class="section-title"
+            style="font-size: 1rem; margin-bottom: 12px"
+          >
+            Nhận xét & hoạt động
+          </h4>
+
+          <div class="activity-card" style="margin-top: 14px">
+            <p class="muted" style="margin: 0 0 8px">Ghi chú</p>
+            <p
+              id="taskNotesPreview"
+              style="margin: 0; white-space: pre-wrap; line-height: 1.6"
+            >
+              Chưa có ghi chú.
+            </p>
+          </div>
+
+          <div class="activity-card" style="margin-top: 14px">
+            <p class="muted" style="margin: 0 0 8px">Đã tạo bởi</p>
+            <p style="margin: 0; font-weight: 700" id="createdByName"></p>
+          </div>
+
+          <div class="activity-card" style="margin-top: 14px">
+            <p class="muted" style="margin: 0 0 8px">Activity feed</p>
+            <div id="activityFeed"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div
+      id="memberPopup"
+      class="board-modal"
+      onclick="if (event.target.id === 'memberPopup') closeMemberPopup();"
+    >
+      <div
+        class="board-modal-content"
+        style="max-width: 760px; grid-template-columns: 1fr"
+      >
+        <button type="button" class="modal-close" onclick="closeMemberPopup()">
+          ×
+        </button>
+        <div class="modal-main">
+          <div class="modal-section" style="margin-top: 0">
+            <h4>Thành viên trong task</h4>
+            <div class="member-list" id="memberList"></div>
+          </div>
+
+          <div class="modal-section">
+            <h4>Thêm thành viên bằng email</h4>
+            <div class="mobile-stack">
+              <input
+                id="memberEmailInput"
+                type="email"
+                placeholder="Nhập email người dùng"
+                style="flex: 1; min-width: 220px"
+              />
+              <button
+                type="button"
+                class="button button-primary"
+                onclick="addMemberByEmail()"
+              >
+                Thêm & giao việc
+              </button>
+            </div>
+            <p
+              id="memberEmailMessage"
+              class="helper-text"
+              style="margin-top: 10px"
+            ></p>
+          </div>
+
+          <div class="modal-section">
+            <h4>Thêm thành viên từ workspace</h4>
+            <div
+              class="card-grid"
+              style="
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+              "
+            >
+              <button
+                type="button"
+                class="member-card"
+                th:each="m : ${members}"
+                th:attr="data-id=${m.user.id}"
+                onclick="addMember(this)"
+                style="text-align: left; cursor: pointer; color: inherit"
+              >
+                <div class="workspace-chip" style="margin-bottom: 12px">
+                  <span
+                    th:text="${m.user.username.length() >= 2 ? m.user.username.substring(0, 2).toUpperCase() : m.user.username.toUpperCase()}"
+                  ></span>
+                  <span th:text="${m.role}"></span>
+                </div>
+                <div
+                  style="font-weight: 800"
+                  th:text="${m.user.username}"
+                ></div>
+                <div class="muted" style="margin-top: 6px">
+                  Nhấn để thêm vào task
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      const projectId = /*[[${project.id}]]*/ 0;
+      let currentTaskId = null;
+      let currentTaskData = null;
+      let lastMoveSnapshot = null;
+
+      function initBottomScrollbar() {
+        const board = document.querySelector(".board-columns");
+        const fixedBar = document.getElementById("boardBottomScroll");
+        const track = document.getElementById("boardBottomScrollTrack");
+        const thumb = document.getElementById("boardBottomScrollThumb");
+
+        if (!board || !fixedBar || !track || !thumb) {
+          return;
+        }
+
+        let dragActive = false;
+        let dragStartX = 0;
+        let dragStartScrollLeft = 0;
+
+        const syncThumb = () => {
+          const maxScroll = Math.max(board.scrollWidth - board.clientWidth, 0);
+          const trackWidth = track.clientWidth;
+
+          if (trackWidth <= 0) {
+            return;
+          }
+
+          if (maxScroll <= 0) {
+            thumb.style.width = trackWidth + "px";
+            thumb.style.transform = "translateX(0px)";
+            fixedBar.style.opacity = "0.8";
+            return;
+          }
+
+          const thumbWidth = Math.max(
+            (board.clientWidth / board.scrollWidth) * trackWidth,
+            84,
+          );
+          const maxThumbX = trackWidth - thumbWidth;
+          const thumbX = (board.scrollLeft / maxScroll) * maxThumbX;
+
+          thumb.style.width = thumbWidth + "px";
+          thumb.style.transform = `translateX(${thumbX}px)`;
+          fixedBar.style.opacity = "1";
+        };
+
+        const onPointerMove = (event) => {
+          if (!dragActive) {
+            return;
+          }
+
+          const trackWidth = track.clientWidth;
+          const thumbWidth = thumb.offsetWidth;
+          const maxThumbX = Math.max(trackWidth - thumbWidth, 1);
+          const maxScroll = Math.max(board.scrollWidth - board.clientWidth, 0);
+          const deltaX = event.clientX - dragStartX;
+          const scrollDelta = (deltaX / maxThumbX) * maxScroll;
+
+          board.scrollLeft = dragStartScrollLeft + scrollDelta;
+          syncThumb();
+        };
+
+        const endDrag = () => {
+          dragActive = false;
+          document.body.style.userSelect = "";
+        };
+
+        thumb.addEventListener("pointerdown", (event) => {
+          dragActive = true;
+          dragStartX = event.clientX;
+          dragStartScrollLeft = board.scrollLeft;
+          document.body.style.userSelect = "none";
+          thumb.setPointerCapture(event.pointerId);
+        });
+
+        thumb.addEventListener("pointermove", onPointerMove);
+        thumb.addEventListener("pointerup", endDrag);
+        thumb.addEventListener("pointercancel", endDrag);
+
+        track.addEventListener("click", (event) => {
+          if (event.target === thumb) {
+            return;
+          }
+
+          const rect = track.getBoundingClientRect();
+          const clickX = event.clientX - rect.left;
+          const thumbWidth = thumb.offsetWidth;
+          const maxThumbX = Math.max(track.clientWidth - thumbWidth, 1);
+          const ratio = Math.min(
+            Math.max((clickX - thumbWidth / 2) / maxThumbX, 0),
+            1,
+          );
+          const maxScroll = Math.max(board.scrollWidth - board.clientWidth, 0);
+
+          board.scrollLeft = ratio * maxScroll;
+          syncThumb();
+        });
+
+        board.addEventListener("scroll", syncThumb);
+        window.addEventListener("resize", syncThumb);
+
+        syncThumb();
+      }
+
+      function toggleMenu(id) {
+        const menu = document.getElementById("menu-" + id);
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+
+      function closeMenu(id) {
+        document.getElementById("menu-" + id).style.display = "none";
+      }
+
+      function openAddCardForm(statusId) {
+        const columnCards = document.getElementById(String(statusId));
+
+        if (!columnCards) {
+          return;
+        }
+
+        const column = columnCards.closest(".board-column");
+        const trigger = column
+          ? column.querySelector(".add-card-trigger")
+          : null;
+
+        if (trigger) {
+          showForm(trigger);
+        }
+
+        closeMenu(statusId);
+      }
+
+      function showForm(trigger) {
+        trigger.style.display = "none";
+        trigger.nextElementSibling.classList.remove("hidden");
+      }
+
+      function hideForm(closeButton) {
+        const form = closeButton.closest(".add-card-form");
+        form.classList.add("hidden");
+        form.previousElementSibling.style.display = "inline-flex";
+      }
+
+      function openTaskModal(taskId) {
+        currentTaskId = taskId;
+        const modal = document.getElementById("taskModal");
+        modal.style.display = "flex";
+
+        fetch(`/projects/${projectId}/tasks/${taskId}`)
+          .then((res) => res.json())
+          .then((task) => {
+            currentTaskData = task;
+            const titleInput = document.getElementById("modalTitle");
+            const descriptionInput = document.getElementById("taskDescription");
+            const dueDateInput = document.getElementById("taskDueDate");
+            const notesInput = document.getElementById("commentBox");
+            const notesPreview = document.getElementById("taskNotesPreview");
+            const createdByName = document.getElementById("createdByName");
+            const checkBtn = document.getElementById("checkBtn");
+
+            titleInput.value = task.title || "";
+            descriptionInput.value = task.description || "";
+            dueDateInput.value = task.dueDate || "";
+            notesInput.value = task.notes || "";
+            notesPreview.innerText =
+              task.notes && task.notes.trim().length
+                ? task.notes
+                : "Chưa có ghi chú.";
+            createdByName.innerText = task.createdBy || "";
+
+            if (task.completed) {
+              checkBtn.style.background = "#22c55e";
+              checkBtn.style.borderColor = "#22c55e";
+              checkBtn.innerText = "✓";
+            } else {
+              checkBtn.style.background = "#ffffff";
+              checkBtn.style.borderColor = "rgba(71, 85, 105, 0.42)";
+              checkBtn.innerText = "";
+            }
+
+            checkBtn.onclick = () => toggleComplete(taskId);
+            loadMembers(taskId, "selectedMemberList");
+            loadChecklist(taskId);
+            loadComments(taskId);
+            loadActivities(taskId);
+            loadAttachments(taskId);
+          })
+          .catch((err) => console.error("Failed to load task data:", err));
+      }
+
+      function closeModal() {
+        document.getElementById("taskModal").style.display = "none";
+        currentTaskId = null;
+        currentTaskData = null;
+      }
+
+      function updateTaskCardTitle(taskId, title) {
+        const titleElement = document.querySelector(
+          `.task-card[data-id='${taskId}'] .task-title`,
+        );
+
+        if (titleElement) {
+          titleElement.innerText = title;
+        }
+      }
+
+      function updateTaskDueDate(taskId, dueDate) {
+        const dueDateElement = document.querySelector(
+          `.task-card[data-id='${taskId}'] .task-due-date`,
+        );
+
+        if (!dueDateElement) {
+          return;
+        }
+
+        if (dueDate) {
+          dueDateElement.innerText = `Due: ${dueDate}`;
+          dueDateElement.style.display = "inline-flex";
+        } else {
+          dueDateElement.innerText = "";
+          dueDateElement.style.display = "none";
+        }
+      }
+
+      function saveTitle() {
+        if (!currentTaskId) {
+          return;
+        }
+
+        const titleInput = document.getElementById("modalTitle");
+        const title = (titleInput.value || "").trim();
+
+        if (!title) {
+          titleInput.value = currentTaskData?.title || "";
+          return;
+        }
+
+        fetch(`/projects/${projectId}/tasks/${currentTaskId}/title`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ title }),
+        })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("Không thể lưu tiêu đề task.");
+            }
+
+            return res.json();
+          })
+          .then((task) => {
+            currentTaskData = task;
+            updateTaskCardTitle(task.id, task.title || title);
+          })
+          .catch((err) => {
+            titleInput.value = currentTaskData?.title || titleInput.value;
+            console.error(err);
+          });
+      }
+
+      function toggleComplete(taskId) {
+        fetch(`/projects/${projectId}/tasks/${taskId}/toggle`, {
+          method: "POST",
+        })
+          .then((res) => res.json())
+          .then((task) => {
+            const card = document.querySelector(
+              `.task-card[data-id='${taskId}']`,
+            );
+            const checkBtn = document.getElementById("checkBtn");
+
+            if (card) {
+              card.classList.toggle("completed", task.completed);
+            }
+
+            if (checkBtn) {
+              if (task.completed) {
+                checkBtn.style.background = "#22c55e";
+                checkBtn.style.borderColor = "#22c55e";
+                checkBtn.innerText = "✓";
+              } else {
+                checkBtn.style.background = "#ffffff";
+                checkBtn.style.borderColor = "rgba(71, 85, 105, 0.42)";
+                checkBtn.innerText = "";
+              }
+            }
+          })
+          .catch((err) =>
+            console.error("Failed to toggle task completion:", err),
+          );
+      }
+
+      function saveDescription() {
+        if (!currentTaskId) {
+          return;
+        }
+
+        const description = document.getElementById("taskDescription").value;
+
+        fetch(`/projects/${projectId}/tasks/${currentTaskId}/description`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ description }),
+        })
+          .then((res) => res.json())
+          .then((task) => {
+            const cardDescription = document.querySelector(
+              `.task-card[data-id='${currentTaskId}'] .task-description`,
+            );
+
+            if (cardDescription) {
+              cardDescription.innerText =
+                task.description && task.description.trim().length
+                  ? task.description
+                  : "Không có mô tả.";
+            }
+          })
+          .catch((err) => console.error(err));
+      }
+
+      function saveDueDate() {
+        if (!currentTaskId) {
+          return;
+        }
+
+        const dueDateInput = document.getElementById("taskDueDate");
+        const dueDate = dueDateInput.value || "";
+
+        fetch(`/projects/${projectId}/tasks/${currentTaskId}/due-date`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ dueDate }),
+        })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("Không thể lưu ngày hết hạn.");
+            }
+
+            return res.json();
+          })
+          .then((task) => {
+            currentTaskData = task;
+            updateTaskDueDate(task.id, task.dueDate || dueDate);
+          })
+          .catch((err) => console.error(err));
+      }
+
+      function saveNotes() {
+        if (!currentTaskId) {
+          return;
+        }
+
+        const notes = document.getElementById("commentBox").value;
+        const notesPreview = document.getElementById("taskNotesPreview");
+
+        fetch(`/projects/${projectId}/tasks/${currentTaskId}/notes`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ notes }),
+        })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("Không thể lưu ghi chú.");
+            }
+
+            return res.json();
+          })
+          .then((task) => {
+            currentTaskData = task;
+            notesPreview.innerText =
+              task.notes && task.notes.trim().length
+                ? task.notes
+                : "Chưa có ghi chú.";
+          })
+          .catch((err) => console.error(err));
+      }
+
+      function focusDueDatePicker() {
+        const dueDateInput = document.getElementById("taskDueDate");
+
+        if (!dueDateInput) {
+          return;
+        }
+
+        if (typeof dueDateInput.showPicker === "function") {
+          dueDateInput.showPicker();
+          return;
+        }
+
+        dueDateInput.focus();
+      }
+
+      function renderRows(containerId, rows, emptyText, rowRenderer) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+
+        if (!rows || !rows.length) {
+          container.innerHTML = `<div class="muted">${emptyText}</div>`;
+          return;
+        }
+
+        rows.forEach((row) => {
+          const node = document.createElement("div");
+          node.className = "activity-card";
+          node.style.marginBottom = "8px";
+          node.innerHTML = rowRenderer(row);
+          container.appendChild(node);
+        });
+      }
+
+      function loadChecklist(taskId) {
+        fetch(`/projects/${projectId}/tasks/${taskId}/checklist`)
+          .then((res) => res.json())
+          .then((rows) => {
+            renderRows(
+              "checklistItems",
+              rows,
+              "Chưa có checklist.",
+              (item) => `
+                <div class="mobile-stack" style="justify-content: space-between;">
+                  <label>
+                    <input type="checkbox" ${item.completed ? "checked" : ""} onclick="toggleChecklist(${item.id})" />
+                    <span style="margin-left:6px">${item.title}</span>
+                  </label>
+                  <button class="button button-secondary" onclick="deleteChecklist(${item.id})">Xóa</button>
+                </div>
+              `,
+            );
+          });
+      }
+
+      function addChecklistItem() {
+        if (!currentTaskId) return;
+        const input = document.getElementById("checklistTitle");
+        const title = (input.value || "").trim();
+        if (!title) return;
+
+        fetch(`/projects/${projectId}/tasks/${currentTaskId}/checklist`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        }).then(() => {
+          input.value = "";
+          loadChecklist(currentTaskId);
+          loadActivities(currentTaskId);
+        });
+      }
+
+      function toggleChecklist(itemId) {
+        if (!currentTaskId) return;
+        fetch(
+          `/projects/${projectId}/tasks/${currentTaskId}/checklist/${itemId}/toggle`,
+          { method: "POST" },
+        ).then(() => {
+          loadChecklist(currentTaskId);
+          loadActivities(currentTaskId);
+        });
+      }
+
+      function deleteChecklist(itemId) {
+        if (!currentTaskId) return;
+        fetch(
+          `/projects/${projectId}/tasks/${currentTaskId}/checklist/${itemId}`,
+          { method: "DELETE" },
+        ).then(() => {
+          loadChecklist(currentTaskId);
+          loadActivities(currentTaskId);
+        });
+      }
+
+      function loadComments(taskId) {
+        fetch(`/projects/${projectId}/tasks/${taskId}/comments`)
+          .then((res) => res.json())
+          .then((rows) => {
+            renderRows(
+              "commentTimeline",
+              rows,
+              "Chưa có bình luận.",
+              (c) =>
+                `<div><strong>${c.author}</strong><div style="margin-top:6px">${c.content}</div></div>`,
+            );
+          });
+      }
+
+      function postComment() {
+        if (!currentTaskId) return;
+        const input = document.getElementById("taskCommentInput");
+        const content = (input.value || "").trim();
+        if (!content) return;
+
+        fetch(`/projects/${projectId}/tasks/${currentTaskId}/comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        }).then(() => {
+          input.value = "";
+          loadComments(currentTaskId);
+          loadActivities(currentTaskId);
+        });
+      }
+
+      function loadActivities(taskId) {
+        fetch(`/projects/${projectId}/tasks/${taskId}/activities`)
+          .then((res) => res.json())
+          .then((rows) => {
+            renderRows(
+              "activityFeed",
+              rows,
+              "Chưa có hoạt động.",
+              (a) => `<div><strong>${a.actor}</strong> - ${a.detail}</div>`,
+            );
+          });
+      }
+
+      function loadAttachments(taskId) {
+        fetch(`/projects/${projectId}/tasks/${taskId}/attachments`)
+          .then((res) => res.json())
+          .then((rows) => {
+            renderRows(
+              "attachmentList",
+              rows,
+              "Chưa có tệp đính kèm.",
+              (a) =>
+                `<a class="soft-link" href="/projects/${projectId}/tasks/${taskId}/attachments/${a.id}">${a.name}</a>`,
+            );
+          });
+      }
+
+      function uploadAttachment() {
+        if (!currentTaskId) return;
+        const input = document.getElementById("attachmentInput");
+        const file = input.files && input.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch(`/projects/${projectId}/tasks/${currentTaskId}/attachments`, {
+          method: "POST",
+          body: formData,
+        }).then(() => {
+          input.value = "";
+          loadAttachments(currentTaskId);
+          loadActivities(currentTaskId);
+        });
+      }
+
+      function selectedTaskIds() {
+        return [...document.querySelectorAll(".bulk-select:checked")].map(
+          (node) => Number(node.dataset.id),
+        );
+      }
+
+      function bulkMoveSelected() {
+        const statusId = document.getElementById("bulkStatusId").value;
+        const taskIds = selectedTaskIds();
+        if (!statusId || !taskIds.length) return;
+
+        const snapshot = taskIds.map((taskId) => {
+          const card = document.querySelector(
+            `.task-card[data-id='${taskId}']`,
+          );
+          const source = card ? card.closest(".board-column-cards") : null;
+          return { taskId, oldStatusId: source ? Number(source.id) : null };
+        });
+
+        fetch(`/projects/${projectId}/tasks/bulk-move?statusId=${statusId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(taskIds),
+        }).then(() => {
+          lastMoveSnapshot = snapshot;
+          alert("Đã di chuyển task. Nhấn Ctrl+Z để undo.");
+          window.location.reload();
+        });
+      }
+
+      function undoLastMove() {
+        if (!lastMoveSnapshot || !lastMoveSnapshot.length) return;
+
+        const grouped = {};
+        lastMoveSnapshot.forEach((item) => {
+          if (!item.oldStatusId) return;
+          if (!grouped[item.oldStatusId]) grouped[item.oldStatusId] = [];
+          grouped[item.oldStatusId].push(item.taskId);
+        });
+
+        const jobs = Object.keys(grouped).map((statusId) =>
+          fetch(`/projects/${projectId}/tasks/bulk-move?statusId=${statusId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(grouped[statusId]),
+          }),
+        );
+
+        Promise.all(jobs).then(() => {
+          lastMoveSnapshot = null;
+          window.location.reload();
+        });
+      }
+
+      function addMemberByEmail() {
+        if (!currentTaskId) {
+          return;
+        }
+
+        const emailInput = document.getElementById("memberEmailInput");
+        const message = document.getElementById("memberEmailMessage");
+        const email = (emailInput.value || "").trim();
+
+        if (!email) {
+          message.innerText = "Vui lòng nhập email.";
+          message.style.color = "#f87171";
+          return;
+        }
+
+        fetch(
+          `/projects/${projectId}/tasks/${currentTaskId}/members/by-email?email=${encodeURIComponent(email)}`,
+          {
+            method: "POST",
+          },
+        )
+          .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              throw new Error(
+                data.message || "Không thể thêm thành viên theo email.",
+              );
+            }
+            return data;
+          })
+          .then(() => {
+            message.innerText = "Đã thêm thành viên và giao việc thành công.";
+            message.style.color = "#4ade80";
+            emailInput.value = "";
+            loadMembers(currentTaskId, "memberList");
+            loadMembers(currentTaskId, "selectedMemberList");
+          })
+          .catch((err) => {
+            message.innerText = err.message;
+            message.style.color = "#f87171";
+          });
+      }
+
+      function loadMembers(taskId, targetId = "memberList") {
+        fetch(`/projects/${projectId}/tasks/${taskId}/members`)
+          .then((res) => res.json())
+          .then((data) => {
+            const container = document.getElementById(targetId);
+            container.innerHTML = "";
+
+            if (!data.length) {
+              container.innerHTML =
+                '<div class="empty-state" style="width: 100%">Chưa có thành viên nào trong task này.</div>';
+              return;
+            }
+
+            data.forEach((user) => {
+              const avatar = document.createElement("div");
+              avatar.className = "member-chip";
+              avatar.innerText = user.fullName || user.initial || "?";
+              container.appendChild(avatar);
+            });
+          });
+      }
+
+      function openMemberPopup() {
+        if (!currentTaskId) {
+          return;
+        }
+
+        loadMembers(currentTaskId, "memberList");
+        document.getElementById("memberPopup").style.display = "flex";
+      }
+
+      function closeMemberPopup() {
+        document.getElementById("memberPopup").style.display = "none";
+      }
+
+      function addMember(button) {
+        const userId = button.dataset.id;
+
+        fetch(
+          `/projects/${projectId}/tasks/${currentTaskId}/members/${userId}`,
+          {
+            method: "POST",
+          },
+        ).then(() => {
+          loadMembers(currentTaskId, "memberList");
+          loadMembers(currentTaskId, "selectedMemberList");
+          closeMemberPopup();
+        });
+      }
+
+      document.addEventListener("click", function (event) {
+        const checkBtn = event.target.closest(".check-btn");
+        if (checkBtn) {
+          event.stopPropagation();
+          const card = checkBtn.closest(".task-card");
+          toggleComplete(card.dataset.id);
+          return;
+        }
+
+        const card = event.target.closest(".task-card");
+        if (card) {
+          openTaskModal(card.dataset.id);
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "/") {
+          event.preventDefault();
+          const searchInput = document.querySelector(".topbar-search input");
+          if (searchInput) searchInput.focus();
+        }
+
+        if (event.key.toLowerCase() === "n") {
+          const firstTrigger = document.querySelector(".add-card-trigger");
+          if (firstTrigger) showForm(firstTrigger);
+        }
+
+        if (event.ctrlKey && event.key.toLowerCase() === "z") {
+          event.preventDefault();
+          undoLastMove();
+        }
+      });
+
+      document.querySelectorAll(".board-column-cards").forEach((column) => {
+        new Sortable(column, {
+          group: "shared",
+          animation: 160,
+          ghostClass: "opacity-50",
+          onEnd: function (event) {
+            const taskId = event.item.dataset.id;
+            const statusId = event.to.id;
+
+            fetch(
+              `/projects/${projectId}/tasks/${taskId}/move?statusId=${statusId}`,
+              { method: "POST" },
+            ).catch((err) => {
+              console.error("Failed to move task:", err);
+              window.location.reload();
+            });
+          },
+        });
+      });
+
+      initBottomScrollbar();
+    </script>
+  </body>
+</html>
