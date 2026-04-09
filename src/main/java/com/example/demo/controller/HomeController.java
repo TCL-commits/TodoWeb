@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.Notification;
 import com.example.demo.entity.User;
 import com.example.demo.entity.Workspace;
 import com.example.demo.repository.NotificationRepository;
@@ -15,9 +16,13 @@ import java.util.List;
 import java.util.Collections;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 public class HomeController {
+
+    private static final Pattern DIGIT_PATTERN = Pattern.compile("(\\d+)");
 
     private final UserRepository userRepository;
     private final WorkspaceRepository workspaceRepository;
@@ -51,6 +56,10 @@ public class HomeController {
         try {
             unreadNotifications = notificationRepository.countByUserIdAndReadFalse(user.getId());
             latestNotifications = notificationRepository.findTop10ByUserIdOrderByCreatedAtDesc(user.getId());
+            latestNotifications.stream()
+                    .filter(Notification.class::isInstance)
+                    .map(Notification.class::cast)
+                    .forEach(n -> n.setMessage(repairDigestMessage(n.getType(), n.getMessage())));
         } catch (Exception ignored) {
             // Keep dashboard available even if notification schema is temporarily out of
             // sync.
@@ -70,5 +79,19 @@ public class HomeController {
     @GetMapping("/")
     public String home() {
         return "redirect:/dashboard";
+    }
+
+    private String repairDigestMessage(String type, String message) {
+        if (message == null || !"digest".equalsIgnoreCase(type)) {
+            return message;
+        }
+
+        if (!(message.contains("?") || message.contains("h?n") || message.contains("x? l"))) {
+            return message;
+        }
+
+        Matcher matcher = DIGIT_PATTERN.matcher(message);
+        String count = matcher.find() ? matcher.group(1) : "0";
+        return "Bạn đang có " + count + " task quá hạn cần xử lý.";
     }
 }

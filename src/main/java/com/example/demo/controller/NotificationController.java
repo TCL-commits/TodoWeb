@@ -6,6 +6,7 @@ import com.example.demo.repository.NotificationRepository;
 import com.example.demo.repository.TaskRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -31,10 +32,46 @@ public class NotificationController {
     @GetMapping
     public Map<String, Object> list() {
         User user = currentUser();
-        List<Notification> items = notificationRepository.findTop10ByUserIdOrderByCreatedAtDesc(user.getId());
-        long unreadCount = notificationRepository.countByUserIdAndReadFalse(user.getId());
+        List<Notification> items;
+        long unreadCount;
+        try {
+            items = notificationRepository.findByUserIdOrderByCreatedAtDesc(
+                    user.getId(),
+                    PageRequest.of(0, 20));
+            unreadCount = notificationRepository.countByUserIdAndReadFalse(user.getId());
+        } catch (Exception ex) {
+            items = List.of();
+            unreadCount = 0;
+        }
 
         return Map.of("items", items, "unreadCount", unreadCount);
+    }
+
+    @GetMapping("/counts")
+    public Map<String, Object> scopedCounts(@RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) Long taskId) {
+        User user = currentUser();
+        long totalUnread;
+        long projectUnread;
+        long taskUnread;
+        try {
+            totalUnread = notificationRepository.countByUserIdAndReadFalse(user.getId());
+            projectUnread = projectId == null
+                    ? 0
+                    : notificationRepository.countByUserIdAndProjectIdAndReadFalse(user.getId(), projectId);
+            taskUnread = taskId == null
+                    ? 0
+                    : notificationRepository.countByUserIdAndTaskIdAndReadFalse(user.getId(), taskId);
+        } catch (Exception ex) {
+            totalUnread = 0;
+            projectUnread = 0;
+            taskUnread = 0;
+        }
+
+        return Map.of(
+                "totalUnread", totalUnread,
+                "projectUnread", projectUnread,
+                "taskUnread", taskUnread);
     }
 
     @PostMapping("/{id}/read")
@@ -49,6 +86,28 @@ public class NotificationController {
         notification.setRead(true);
         notificationRepository.save(notification);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/read-all")
+    public ResponseEntity<?> markAllRead() {
+        User user = currentUser();
+        List<Notification> notifications;
+        try {
+            notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(
+                    user.getId(),
+                    PageRequest.of(0, 200));
+        } catch (Exception ex) {
+            return ResponseEntity.ok(Map.of("status", "ok", "updated", 0));
+        }
+
+        long changed = notifications.stream().filter(n -> !n.isRead()).count();
+
+        notifications.stream()
+                .filter(n -> !n.isRead())
+                .forEach(n -> n.setRead(true));
+
+        notificationRepository.saveAll(notifications);
+        return ResponseEntity.ok(Map.of("status", "ok", "updated", changed));
     }
 
     @PostMapping("/digest/overdue")

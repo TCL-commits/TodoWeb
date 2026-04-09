@@ -4,6 +4,10 @@ import com.example.demo.dto.TaskDTO;
 import com.example.demo.dto.UserDTO;
 import com.example.demo.entity.*;
 import com.example.demo.repository.*;
+import com.example.demo.service.AuditLogService;
+import com.example.demo.service.MentionService;
+import com.example.demo.service.RealtimeEventService;
+import com.example.demo.service.WebhookIntegrationService;
 import com.example.demo.service.WorkspacePermissionService;
 import lombok.RequiredArgsConstructor;
 
@@ -48,6 +52,10 @@ public class TaskController {
     private final NotificationRepository notificationRepository;
     private final TaskAttachmentRepository taskAttachmentRepository;
     private final WorkspacePermissionService workspacePermissionService;
+    private final WebhookIntegrationService webhookIntegrationService;
+    private final MentionService mentionService;
+    private final RealtimeEventService realtimeEventService;
+    private final AuditLogService auditLogService;
 
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -70,12 +78,14 @@ public class TaskController {
         taskActivityRepository.save(activity);
     }
 
-    private void notifyUser(User user, String title, String message, String type) {
+    private void notifyUser(User user, String title, String message, String type, Task task) {
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setType(type);
+        notification.setProjectId(task != null && task.getProject() != null ? task.getProject().getId() : null);
+        notification.setTaskId(task != null ? task.getId() : null);
         notification.setRead(false);
         notificationRepository.save(notification);
     }
@@ -167,6 +177,16 @@ public class TaskController {
 
         taskRepository.save(task);
         createActivity(task, user, "CREATE_TASK", "Tạo task mới: " + task.getTitle());
+        auditLogService.save(task, user, "CREATE_TASK", null, task.getTitle(), null);
+        realtimeEventService.publish("task.created", Map.of(
+                "projectId", projectId,
+                "taskId", task.getId(),
+                "title", task.getTitle()));
+        webhookIntegrationService.publish("task.created", Map.of(
+                "projectId", projectId,
+                "taskId", task.getId(),
+                "title", task.getTitle(),
+                "createdBy", user.getUsername()));
 
         return "redirect:/projects/" + projectId + "/tasks";
     }
@@ -187,6 +207,14 @@ public class TaskController {
         task.setStatus(status);
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "MOVE_TASK", "Di chuyển task sang list: " + status.getName());
+        realtimeEventService.publish("task.moved", Map.of(
+                "projectId", projectId,
+                "taskId", task.getId(),
+                "status", status.getName()));
+        webhookIntegrationService.publish("task.moved", Map.of(
+                "projectId", projectId,
+                "taskId", task.getId(),
+                "status", status.getName()));
 
         return "redirect:/projects/" + projectId + "/tasks";
     }
@@ -211,6 +239,14 @@ public class TaskController {
         task.setStatus(status);
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "MOVE_TASK", "Di chuyển task sang list: " + status.getName());
+        realtimeEventService.publish("task.moved", Map.of(
+                "projectId", projectId,
+                "taskId", task.getId(),
+                "status", status.getName()));
+        webhookIntegrationService.publish("task.moved", Map.of(
+                "projectId", projectId,
+                "taskId", task.getId(),
+                "status", status.getName()));
 
         return ResponseEntity.ok().build();
     }
@@ -227,6 +263,14 @@ public class TaskController {
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "TOGGLE_COMPLETE",
                 task.getCompleted() ? "Đánh dấu hoàn thành" : "Mở lại task");
+        realtimeEventService.publish("task.toggled", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "completed", task.getCompleted()));
+        webhookIntegrationService.publish("task.toggled", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "completed", task.getCompleted()));
 
         return new TaskDTO(task);
     }
@@ -245,7 +289,12 @@ public class TaskController {
         task.getMembers().add(user);
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "ASSIGN_MEMBER", "Gán thành viên: " + user.getUsername());
-        notifyUser(user, "Bạn được giao task", "Task: " + task.getTitle(), "assignment");
+        notifyUser(user, "Bạn được giao task", "Task: " + task.getTitle(), "assignment", task);
+        auditLogService.save(task, getCurrentUser(), "ASSIGN_MEMBER", null, user.getUsername(), null);
+        realtimeEventService.publish("task.member.assigned", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "user", user.getUsername()));
 
         return ResponseEntity.ok().build();
     }
@@ -292,7 +341,8 @@ public class TaskController {
         task.getMembers().add(user);
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "ASSIGN_MEMBER", "Gán thành viên: " + user.getUsername());
-        notifyUser(user, "Bạn được giao task", "Task: " + task.getTitle(), "assignment");
+        notifyUser(user, "Bạn được giao task", "Task: " + task.getTitle(), "assignment", task);
+        auditLogService.save(task, getCurrentUser(), "ASSIGN_MEMBER", null, user.getUsername(), null);
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", user.getId());
@@ -313,13 +363,17 @@ public class TaskController {
 
         return task.getMembers().stream()
                 .map(u -> {
-                    String username = u.getUsername();
+                    String displayName = u.getFullName();
+                    if (displayName == null || displayName.isBlank()) {
+                        displayName = u.getUsername();
+                    }
 
-                    String shortName = username.length() >= 2
-                            ? username.substring(0, 2).toUpperCase()
-                            : username.toUpperCase();
+                    String avatarUrl = null;
+                    if (u.getAvatarFilename() != null && !u.getAvatarFilename().isBlank()) {
+                        avatarUrl = "/users/" + u.getId() + "/avatar?v=" + u.getAvatarFilename();
+                    }
 
-                    return new UserDTO(u.getId(), shortName);
+                    return new UserDTO(u.getId(), displayName, avatarUrl);
                 })
                 .toList();
     }
@@ -336,6 +390,11 @@ public class TaskController {
         task.setDescription(updatedTask.getDescription());
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "UPDATE_DESCRIPTION", "Cập nhật mô tả task");
+        auditLogService.save(task, getCurrentUser(), "UPDATE_DESCRIPTION", null, task.getDescription(), null);
+        realtimeEventService.publish("task.updated", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "field", "description"));
 
         return new TaskDTO(task);
     }
@@ -354,9 +413,21 @@ public class TaskController {
         if (!canManageProject(task.getProject())) {
             return ResponseEntity.status(403).build();
         }
+        String oldTitle = task.getTitle();
         task.setTitle(title.trim());
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "UPDATE_TITLE", "Đổi tiêu đề task thành: " + task.getTitle());
+        auditLogService.save(task, getCurrentUser(), "UPDATE_TITLE", oldTitle, task.getTitle(), null);
+        realtimeEventService.publish("task.updated", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "field", "title",
+                "value", task.getTitle()));
+        webhookIntegrationService.publish("task.updated", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "field", "title",
+                "value", task.getTitle()));
 
         return ResponseEntity.ok(new TaskDTO(task));
     }
@@ -371,9 +442,15 @@ public class TaskController {
             throw new RuntimeException("Access denied");
         }
         String notes = payload.get("notes");
+        String before = task.getNotes();
         task.setNotes(notes == null ? null : notes.trim());
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "UPDATE_NOTES", "Cập nhật ghi chú nhanh");
+        auditLogService.save(task, getCurrentUser(), "UPDATE_NOTES", before, task.getNotes(), null);
+        realtimeEventService.publish("task.updated", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "field", "notes"));
 
         return new TaskDTO(task);
     }
@@ -389,6 +466,7 @@ public class TaskController {
         }
         String dueDateValue = payload.get("dueDate");
 
+        String before = task.getDueDate() == null ? null : task.getDueDate().toString();
         if (dueDateValue == null || dueDateValue.trim().isEmpty()) {
             task.setDueDate(null);
         } else {
@@ -398,6 +476,18 @@ public class TaskController {
         taskRepository.save(task);
         createActivity(task, getCurrentUser(), "UPDATE_DUE_DATE",
                 task.getDueDate() == null ? "Xóa ngày hết hạn" : "Đặt hạn: " + task.getDueDate());
+        auditLogService.save(task, getCurrentUser(), "UPDATE_DUE_DATE", before,
+                task.getDueDate() == null ? null : task.getDueDate().toString(), null);
+        realtimeEventService.publish("task.updated", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "field", "dueDate",
+                "value", task.getDueDate()));
+        webhookIntegrationService.publish("task.updated", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "field", "dueDate",
+                "value", task.getDueDate()));
 
         return ResponseEntity.ok(new TaskDTO(task));
     }
@@ -536,7 +626,13 @@ public class TaskController {
         comment.setAuthor(actor);
         comment.setContent(content.trim());
         taskCommentRepository.save(comment);
+        mentionService.notifyMentions(task, actor, comment.getContent());
+        auditLogService.save(task, actor, "COMMENT_ADD", null, comment.getContent(), null);
         createActivity(task, actor, "COMMENT_ADD", "Thêm bình luận mới");
+        realtimeEventService.publish("task.comment.added", Map.of(
+                "projectId", task.getProject() != null ? task.getProject().getId() : null,
+                "taskId", task.getId(),
+                "author", actor.getUsername()));
 
         return ResponseEntity.ok(Map.of(
                 "id", comment.getId(),

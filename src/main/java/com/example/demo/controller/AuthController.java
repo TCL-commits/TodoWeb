@@ -42,7 +42,8 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String login() {
+    public String login(Model model) {
+        model.addAttribute("logoVersion", System.currentTimeMillis());
         return "login";
     }
 }

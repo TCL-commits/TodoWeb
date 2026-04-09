@@ -2,6 +2,7 @@ package com.example.demo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -15,6 +16,13 @@ public class Project {
     private String name;
 
     private String description;
+
+    @Column(name = "archived")
+    private Boolean archived;
+
+    private LocalDateTime archivedAt;
+
+    private LocalDateTime deletedAt;
 
     @ManyToOne
     @JoinColumn(name = "workspace_id", nullable = false)

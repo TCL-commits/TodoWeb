@@ -2,10 +2,12 @@ package com.example.demo.repository;
 
 import com.example.demo.entity.Task;
 import com.example.demo.entity.Project;
+import com.example.demo.entity.RecurrenceType;
 import com.example.demo.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,6 +16,16 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
     List<Task> findByProject(Project project);
+
+    List<Task> findByProjectIdAndStatusIdAndArchivedFalseAndDeletedAtIsNullOrderByUpdatedAtDesc(Long projectId,
+            Long statusId,
+            Pageable pageable);
+
+    List<Task> findByProjectIdAndArchivedFalseAndDeletedAtIsNull(Long projectId);
+
+    List<Task> findByRecurrenceTypeNotAndNextRecurrenceDateLessThanEqual(RecurrenceType recurrenceType, LocalDate date);
+
+    List<Task> findBySprintIdOrderByCreatedAtAsc(Long sprintId);
 
     @Query("""
             SELECT DISTINCT t FROM Task t

@@ -19,6 +19,14 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    private String fullName;
+
+    private String phone;
+
+    private String avatarFilename;
+
+    private String avatarContentType;
+
     private String password;
 
     @OneToMany(mappedBy = "owner")

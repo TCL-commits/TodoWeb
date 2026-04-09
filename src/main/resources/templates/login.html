@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | Think-Calc-Loop</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
   </head>
   <body class="auth-page">
     <div class="auth-layout">
       <aside class="auth-aside">
         <div>
           <div class="auth-identity">
-            <span class="brand-mark">T</span>
+            <img
+              class="auth-logo"
+              th:src="@{'/icons/logoTCLS.png?v=' + ${logoVersion}}"
+              alt="Think-Calc-Loop logo"
+            />
             <span class="auth-badge">Think-Calc-Loop</span>
           </div>
           <h1 class="auth-title">

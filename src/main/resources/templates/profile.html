@@ -1,0 +1,187 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile | Think-Calc-Loop</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
+  </head>
+  <body class="app-bg">
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" th:href="@{/dashboard}">
+          <span class="brand-mark">T</span>
+          <span class="brand-text">
+            <span>Think-Calc-Loop</span>
+            <small>Account profile</small>
+          </span>
+        </a>
+
+        <div class="topbar-actions">
+          <a class="button button-secondary" th:href="@{/dashboard}"
+            >Dashboard</a
+          >
+          <form th:action="@{/logout}" method="post" class="logout-form">
+            <button class="button button-secondary" type="submit">
+              Đăng xuất
+            </button>
+          </form>
+          <a
+            th:if="${currentUserHasAvatar}"
+            class="avatar-link"
+            th:href="@{/profile}"
+            aria-label="Profile"
+          >
+            <img
+              class="avatar-image"
+              th:src="${currentUserAvatarUrl}"
+              alt="Avatar"
+            />
+          </a>
+          <a
+            th:unless="${currentUserHasAvatar}"
+            class="avatar-pill"
+            th:href="@{/profile}"
+            aria-label="Profile"
+          >
+            <span th:text="${currentUserInitials}"></span>
+          </a>
+        </div>
+      </header>
+
+      <main class="page-content profile-page">
+        <section class="hero">
+          <div class="hero-card">
+            <div class="hero-kicker">Tài khoản</div>
+            <h1 class="hero-title">Thông tin user và avatar</h1>
+            <p class="hero-copy">
+              Cập nhật thông tin cá nhân, email, số điện thoại và ảnh đại diện
+              của bạn ở một nơi.
+            </p>
+          </div>
+
+          <aside class="hero-stats profile-preview-card">
+            <div class="profile-preview">
+              <img
+                th:if="${currentUserHasAvatar}"
+                class="profile-preview-avatar"
+                th:src="${currentUserAvatarUrl}"
+                alt="Avatar preview"
+              />
+              <div
+                th:unless="${currentUserHasAvatar}"
+                class="profile-preview-initials"
+              >
+                <span th:text="${currentUserInitials}"></span>
+              </div>
+              <div>
+                <div class="stat-label">Username</div>
+                <div class="stat-value" th:text="${user.username}"></div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Cập nhật thông tin</h2>
+              <p class="section-subtitle">
+                Đổi email, tên hiển thị, số điện thoại và avatar.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="empty-state"
+            th:if="${profileError}"
+            th:text="${profileError}"
+          ></div>
+          <div
+            class="empty-state success-state"
+            th:if="${profileSuccess}"
+            th:text="${profileSuccess}"
+          ></div>
+
+          <form
+            class="panel profile-form"
+            th:action="@{/profile}"
+            method="post"
+            enctype="multipart/form-data"
+          >
+            <div class="profile-form-grid">
+              <div class="field">
+                <label class="field-label" for="username">Username</label>
+                <input
+                  class="auth-input"
+                  id="username"
+                  type="text"
+                  th:value="${user.username}"
+                  disabled
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="fullName">Họ và tên</label>
+                <input
+                  class="auth-input"
+                  id="fullName"
+                  type="text"
+                  name="fullName"
+                  th:value="${user.fullName}"
+                  placeholder="Nhập họ và tên"
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="email">Email</label>
+                <input
+                  class="auth-input"
+                  id="email"
+                  type="email"
+                  name="email"
+                  th:value="${user.email}"
+                  placeholder="Nhập email"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="phone">Số điện thoại</label>
+                <input
+                  class="auth-input"
+                  id="phone"
+                  type="text"
+                  name="phone"
+                  th:value="${user.phone}"
+                  placeholder="Nhập số điện thoại"
+                />
+              </div>
+
+              <div class="field field--full">
+                <label class="field-label" for="avatarFile">Ảnh đại diện</label>
+                <input
+                  class="auth-input file-input"
+                  id="avatarFile"
+                  type="file"
+                  name="avatarFile"
+                  accept="image/*"
+                />
+              </div>
+            </div>
+
+            <div class="profile-form-actions">
+              <button class="button button-primary" type="submit">
+                Lưu thông tin
+              </button>
+              <a class="button button-secondary" th:href="@{/dashboard}"
+                >Quay lại dashboard</a
+              >
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

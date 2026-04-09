@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Create Workspace | Think-Calc-Loop</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
   </head>
   <body class="app-bg">
     <div class="page-shell">
@@ -19,6 +20,31 @@
 
         <div class="topbar-actions">
           <a class="button button-secondary" th:href="@{/workspaces}">Back</a>
+          <a
+            th:if="${currentUserHasAvatar}"
+            class="avatar-link"
+            th:href="@{/profile}"
+            aria-label="Profile"
+          >
+            <img
+              class="avatar-image"
+              th:src="${currentUserAvatarUrl}"
+              alt="Avatar"
+            />
+          </a>
+          <a
+            th:unless="${currentUserHasAvatar}"
+            class="avatar-pill"
+            th:href="@{/profile}"
+            aria-label="Profile"
+          >
+            <span th:text="${currentUserInitials}"></span>
+          </a>
+          <form class="logout-form" th:action="@{/logout}" method="post">
+            <button class="button button-secondary" type="submit">
+              Đăng xuất
+            </button>
+          </form>
         </div>
       </header>
 

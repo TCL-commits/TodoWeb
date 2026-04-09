@@ -7,6 +7,7 @@
       Board | Think-Calc-Loop
     </title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   </head>
   <body class="app-bg">
@@ -33,10 +34,31 @@
           <a class="button button-primary" th:href="@{/workspaces}"
             >Workspaces</a
           >
-          <span
+          <a
+            th:if="${currentUserHasAvatar}"
+            class="avatar-link"
+            th:href="@{/profile}"
+            aria-label="Profile"
+          >
+            <img
+              class="avatar-image"
+              th:src="${currentUserAvatarUrl}"
+              alt="Avatar"
+            />
+          </a>
+          <a
+            th:unless="${currentUserHasAvatar}"
             class="avatar-pill"
-            th:text="${username.length() >= 2 ? username.substring(0, 2).toUpperCase() : username.toUpperCase()}"
-          ></span>
+            th:href="@{/profile}"
+            aria-label="Profile"
+          >
+            <span th:text="${currentUserInitials}"></span>
+          </a>
+          <form class="logout-form" th:action="@{/logout}" method="post">
+            <button class="button button-secondary" type="submit">
+              Đăng xuất
+            </button>
+          </form>
         </div>
       </header>
 
@@ -460,8 +482,16 @@
                 style="text-align: left; cursor: pointer; color: inherit"
               >
                 <div class="workspace-chip" style="margin-bottom: 12px">
+                  <img
+                    th:if="${m.user.avatarFilename != null and !#strings.isEmpty(m.user.avatarFilename)}"
+                    class="member-chip-image member-chip-image--small"
+                    th:src="@{'/users/' + ${m.user.id} + '/avatar?v=' + ${m.user.avatarFilename}}"
+                    th:alt="${m.user.username}"
+                  />
                   <span
-                    th:text="${m.user.username.length() >= 2 ? m.user.username.substring(0, 2).toUpperCase() : m.user.username.toUpperCase()}"
+                    th:unless="${m.user.avatarFilename != null and !#strings.isEmpty(m.user.avatarFilename)}"
+                    class="member-chip member-chip--small"
+                    th:text="${m.user.username != null and m.user.username.length() >= 2 ? m.user.username.substring(0, 2).toUpperCase() : (m.user.username != null ? m.user.username.toUpperCase() : 'U')}"
                   ></span>
                   <span th:text="${m.role}"></span>
                 </div>
@@ -1147,10 +1177,46 @@
             data.forEach((user) => {
               const avatar = document.createElement("div");
               avatar.className = "member-chip";
-              avatar.innerText = user.fullName || user.initial || "?";
+
+              if (user.avatarUrl) {
+                const image = document.createElement("img");
+                image.className = "member-chip-image";
+                image.src = user.avatarUrl;
+                image.alt = user.displayName || "Avatar";
+                image.onerror = () => {
+                  avatar.innerHTML = "";
+                  const label = document.createElement("span");
+                  label.innerText = initialsFromName(user.displayName || "?");
+                  avatar.appendChild(label);
+                };
+                avatar.appendChild(image);
+              } else {
+                const label = document.createElement("span");
+                label.innerText = initialsFromName(user.displayName || "?");
+                avatar.appendChild(label);
+              }
+
               container.appendChild(avatar);
             });
           });
+      }
+
+      function initialsFromName(value) {
+        const trimmed = value.trim();
+        if (!trimmed.length) {
+          return "?";
+        }
+
+        const parts = trimmed.split(/\s+/);
+        if (parts.length === 1) {
+          return parts[0]
+            .substring(0, Math.min(2, parts[0].length))
+            .toUpperCase();
+        }
+
+        return (
+          parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)
+        ).toUpperCase();
       }
 
       function openMemberPopup() {
