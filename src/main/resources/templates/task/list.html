@@ -485,12 +485,16 @@
                   <img
                     th:if="${m.user.avatarFilename != null and !#strings.isEmpty(m.user.avatarFilename)}"
                     class="member-chip-image member-chip-image--small"
-                    th:src="@{'/users/' + ${m.user.id} + '/avatar?v=' + ${m.user.avatarFilename}}"
+                    th:src="@{'/users/' + ${m.user.id} + '/avatar'}"
                     th:alt="${m.user.username}"
+                    onerror="
+                      this.style.display = 'none';
+                      this.nextElementSibling.style.display = 'grid';
+                    "
                   />
                   <span
-                    th:unless="${m.user.avatarFilename != null and !#strings.isEmpty(m.user.avatarFilename)}"
-                    class="member-chip member-chip--small"
+                    class="member-chip member-chip--small member-chip--small-fallback"
+                    th:style="${m.user.avatarFilename != null and !#strings.isEmpty(m.user.avatarFilename)} ? 'display:none;' : 'display:grid;'"
                     th:text="${m.user.username != null and m.user.username.length() >= 2 ? m.user.username.substring(0, 2).toUpperCase() : (m.user.username != null ? m.user.username.toUpperCase() : 'U')}"
                   ></span>
                   <span th:text="${m.role}"></span>
