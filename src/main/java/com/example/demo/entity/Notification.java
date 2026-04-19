@@ -25,11 +25,11 @@ public class Notification {
     private User user;
 
     @Nationalized
-    @Column(nullable = false, columnDefinition = "nvarchar(255)")
+    @Column(nullable = false, length = 255)
     private String title;
 
     @Nationalized
-    @Column(nullable = false, length = 1000, columnDefinition = "nvarchar(1000)")
+    @Column(nullable = false, length = 1000)
     private String message;
 
     @Column(nullable = false)
