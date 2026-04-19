@@ -1,0 +1,10 @@
+target
+.git
+.github
+.idea
+.vscode
+node_modules
+uploads
+*.log
+cookies.txt
+cookies_search.txt
