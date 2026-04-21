@@ -26,18 +26,25 @@ public class CurrentUserModelAdvice {
     public boolean currentUserHasAvatar() {
         User currentUser = lookupCurrentUser();
         return currentUser != null
-                && currentUser.getAvatarFilename() != null
-                && !currentUser.getAvatarFilename().isBlank();
+                && ((currentUser.getAvatarFilename() != null
+                        && !currentUser.getAvatarFilename().isBlank())
+                        || (currentUser.getAvatarData() != null && currentUser.getAvatarData().length > 0));
     }
 
     @ModelAttribute("currentUserAvatarUrl")
     public String currentUserAvatarUrl() {
         User currentUser = lookupCurrentUser();
-        if (currentUser == null || currentUser.getAvatarFilename() == null
-                || currentUser.getAvatarFilename().isBlank()) {
+        if (currentUser == null) {
             return "";
         }
-        return "/me/avatar?v=" + currentUser.getAvatarFilename();
+
+        boolean hasFilename = currentUser.getAvatarFilename() != null && !currentUser.getAvatarFilename().isBlank();
+        boolean hasAvatarData = currentUser.getAvatarData() != null && currentUser.getAvatarData().length > 0;
+        if (!hasFilename && !hasAvatarData) {
+            return "";
+        }
+        String version = hasFilename ? currentUser.getAvatarFilename() : "db-" + currentUser.getId();
+        return "/me/avatar?v=" + version;
     }
 
     @ModelAttribute("currentUserInitials")

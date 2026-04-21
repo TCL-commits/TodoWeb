@@ -27,6 +27,10 @@ public class User {
 
     private String avatarContentType;
 
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    private byte[] avatarData;
+
     private String password;
 
     @OneToMany(mappedBy = "owner")
