@@ -16,7 +16,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -81,13 +85,18 @@ public class WorkspaceController {
             Authentication authentication) {
 
         User currentUser = userRepository.findByUsername(authentication.getName()).orElseThrow();
-        if (!workspacePermissionService.canManageMembers(workspaceId, currentUser)) {
-            return "redirect:/workspaces/" + workspaceId + "/projects?memberError=forbidden";
-        }
 
         Workspace workspace = workspaceRepository
                 .findById(workspaceId)
                 .orElseThrow();
+
+        if ("PERSONAL".equalsIgnoreCase(workspace.getType())) {
+            return "redirect:/workspaces/" + workspaceId + "/projects?memberError=personal";
+        }
+
+        if (!workspacePermissionService.canManageMembers(workspaceId, currentUser)) {
+            return "redirect:/workspaces/" + workspaceId + "/projects?memberError=forbidden";
+        }
 
         String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
         if (normalizedEmail.isEmpty()) {
@@ -126,6 +135,12 @@ public class WorkspaceController {
             Authentication authentication) {
 
         User currentUser = userRepository.findByUsername(authentication.getName()).orElseThrow();
+
+        Workspace workspace = workspaceRepository.findById(workspaceId).orElseThrow();
+        if ("PERSONAL".equalsIgnoreCase(workspace.getType())) {
+            return "redirect:/workspaces/" + workspaceId + "/projects?memberError=personal";
+        }
+
         if (!workspacePermissionService.canManageMembers(workspaceId, currentUser)) {
             return "redirect:/workspaces/" + workspaceId + "/projects?memberError=forbidden";
         }
@@ -144,5 +159,48 @@ public class WorkspaceController {
         workspaceMemberRepository.save(member);
 
         return "redirect:/workspaces/" + workspaceId + "/projects?memberRoleUpdated=1";
+    }
+
+    @GetMapping("/{workspaceId}/member-suggestions")
+    @ResponseBody
+    public List<Map<String, String>> suggestMembers(@PathVariable Long workspaceId,
+            @RequestParam(name = "q", required = false) String query,
+            Authentication authentication) {
+
+        User currentUser = userRepository.findByUsername(authentication.getName()).orElseThrow();
+        Workspace workspace = workspaceRepository.findById(workspaceId).orElseThrow();
+
+        if ("PERSONAL".equalsIgnoreCase(workspace.getType())) {
+            return List.of();
+        }
+
+        if (!workspacePermissionService.canManageMembers(workspaceId, currentUser)) {
+            return List.of();
+        }
+
+        String normalized = query == null ? "" : query.trim();
+        if (normalized.length() < 2) {
+            return List.of();
+        }
+
+        Set<Long> memberIds = workspaceMemberRepository.findByWorkspaceId(workspaceId)
+                .stream()
+                .map(m -> m.getUser().getId())
+                .collect(Collectors.toSet());
+
+        return userRepository
+                .findTop8ByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrderByEmailAsc(
+                        normalized,
+                        normalized)
+                .stream()
+                .filter(u -> u.getEmail() != null && !u.getEmail().isBlank())
+                .filter(u -> u.getId() != null && !memberIds.contains(u.getId()))
+                .map(u -> {
+                    Map<String, String> item = new LinkedHashMap<>();
+                    item.put("email", u.getEmail());
+                    item.put("username", u.getUsername() == null ? "" : u.getUsername());
+                    return item;
+                })
+                .toList();
     }
 }

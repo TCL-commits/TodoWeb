@@ -70,7 +70,11 @@ public class ProjectController {
                         throw new RuntimeException("Access Denied");
                 }
 
+                boolean isPersonalWorkspace = "PERSONAL".equalsIgnoreCase(workspace.getType());
                 model.addAttribute("canManage", workspacePermissionService.canManageProjects(workspaceId, user));
+                model.addAttribute("isPersonalWorkspace", isPersonalWorkspace);
+                model.addAttribute("canManageMembers",
+                                !isPersonalWorkspace && workspacePermissionService.canManageMembers(workspaceId, user));
                 return "project/list";
         }
 

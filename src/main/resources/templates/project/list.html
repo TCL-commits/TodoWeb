@@ -105,44 +105,62 @@
               </div>
             </div>
 
-            <div class="empty-state" th:if="${param.memberAdded}">
+            <div class="empty-state" th:if="${isPersonalWorkspace}">
+              Workspace PERSONAL chỉ dành cho cá nhân, không thể thêm thành
+              viên.
+            </div>
+
+            <div
+              class="empty-state"
+              th:if="${!isPersonalWorkspace and param.memberAdded}"
+            >
               Đã thêm thành viên thành công.
             </div>
 
             <div
               class="empty-state"
-              th:if="${param.memberError != null and param.memberError[0] == 'notfound'}"
+              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'notfound'}"
             >
               Không tìm thấy tài khoản theo email này.
             </div>
 
             <div
               class="empty-state"
-              th:if="${param.memberError != null and param.memberError[0] == 'exists'}"
+              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'exists'}"
             >
               Người dùng này đã là thành viên workspace.
             </div>
 
             <div
               class="empty-state"
-              th:if="${param.memberError != null and param.memberError[0] == 'empty'}"
+              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'empty'}"
             >
               Vui lòng nhập email hợp lệ.
             </div>
 
             <div
               class="empty-state"
-              th:if="${param.memberError != null and param.memberError[0] == 'forbidden'}"
+              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'forbidden'}"
             >
               Bạn không có quyền quản lý thành viên trong workspace này.
             </div>
 
-            <div class="empty-state" th:if="${param.memberRoleUpdated}">
+            <div
+              class="empty-state"
+              th:if="${param.memberError != null and param.memberError[0] == 'personal'}"
+            >
+              Workspace PERSONAL không hỗ trợ thêm thành viên.
+            </div>
+
+            <div
+              class="empty-state"
+              th:if="${!isPersonalWorkspace and param.memberRoleUpdated}"
+            >
               Đã cập nhật quyền thành viên.
             </div>
 
             <form
-              th:if="${canManage}"
+              th:if="${canManageMembers}"
               th:action="@{'/workspaces/' + ${workspace.id} + '/add-member'}"
               method="post"
               class="form-grid"
@@ -155,9 +173,15 @@
                   id="memberEmail"
                   name="email"
                   type="email"
+                  list="memberEmailSuggestions"
+                  autocomplete="off"
                   placeholder="member@example.com"
                   required
                 />
+                <datalist id="memberEmailSuggestions"></datalist>
+                <div class="helper-text" id="memberEmailHint">
+                  Gõ từ 2 ký tự để xem gợi ý email đã đăng ký.
+                </div>
               </div>
 
               <button class="button button-primary" type="submit">
@@ -186,7 +210,7 @@
                     th:text="${m.user.email != null ? m.user.email : 'Không có email'}"
                   ></p>
                   <form
-                    th:if="${canManage}"
+                    th:if="${canManageMembers}"
                     th:action="@{'/workspaces/' + ${workspace.id} + '/members/' + ${m.id} + '/role'}"
                     method="post"
                     class="mobile-stack"
@@ -298,5 +322,82 @@
         </section>
       </main>
     </div>
+    <script th:inline="javascript">
+      (() => {
+        const emailInput = document.getElementById("memberEmail");
+        const suggestions = document.getElementById("memberEmailSuggestions");
+        const hint = document.getElementById("memberEmailHint");
+        if (!emailInput || !suggestions) {
+          return;
+        }
+
+        const endpoint =
+          /*[[@{'/workspaces/' + ${workspace.id} + '/member-suggestions'}]]*/ "";
+        let currentRequest = null;
+
+        const clearSuggestions = () => {
+          suggestions.innerHTML = "";
+        };
+
+        emailInput.addEventListener("input", async () => {
+          const query = (emailInput.value || "").trim();
+          if (query.length < 2) {
+            clearSuggestions();
+            if (hint) {
+              hint.textContent = "Gõ từ 2 ký tự để xem gợi ý email đã đăng ký.";
+            }
+            return;
+          }
+
+          if (currentRequest) {
+            currentRequest.abort();
+          }
+
+          currentRequest = new AbortController();
+          try {
+            const response = await fetch(
+              `${endpoint}?q=${encodeURIComponent(query)}`,
+              { signal: currentRequest.signal },
+            );
+            if (!response.ok) {
+              clearSuggestions();
+              return;
+            }
+
+            const data = await response.json();
+            clearSuggestions();
+
+            if (!Array.isArray(data) || data.length === 0) {
+              if (hint) {
+                hint.textContent = "Không có email phù hợp.";
+              }
+              return;
+            }
+
+            data.forEach((item) => {
+              if (!item || !item.email) {
+                return;
+              }
+              const option = document.createElement("option");
+              option.value = item.email;
+              if (item.username) {
+                option.label = `${item.email} (${item.username})`;
+              }
+              suggestions.appendChild(option);
+            });
+
+            if (hint) {
+              hint.textContent =
+                "Chọn email từ danh sách gợi ý hoặc tiếp tục nhập.";
+            }
+          } catch (error) {
+            if (error && error.name === "AbortError") {
+              return;
+            }
+            clearSuggestions();
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
