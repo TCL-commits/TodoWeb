@@ -105,42 +105,42 @@
               </div>
             </div>
 
-            <div class="empty-state" th:if="${isPersonalWorkspace}">
+            <div class="empty-state" th:if="${isPersonalWorkspace == true}">
               Workspace PERSONAL chỉ dành cho cá nhân, không thể thêm thành
               viên.
             </div>
 
             <div
               class="empty-state"
-              th:if="${!isPersonalWorkspace and param.memberAdded}"
+              th:if="${isPersonalWorkspace != true and param.memberAdded != null}"
             >
               Đã thêm thành viên thành công.
             </div>
 
             <div
               class="empty-state"
-              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'notfound'}"
+              th:if="${isPersonalWorkspace != true and param.memberError != null and param.memberError[0] == 'notfound'}"
             >
               Không tìm thấy tài khoản theo email này.
             </div>
 
             <div
               class="empty-state"
-              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'exists'}"
+              th:if="${isPersonalWorkspace != true and param.memberError != null and param.memberError[0] == 'exists'}"
             >
               Người dùng này đã là thành viên workspace.
             </div>
 
             <div
               class="empty-state"
-              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'empty'}"
+              th:if="${isPersonalWorkspace != true and param.memberError != null and param.memberError[0] == 'empty'}"
             >
               Vui lòng nhập email hợp lệ.
             </div>
 
             <div
               class="empty-state"
-              th:if="${!isPersonalWorkspace and param.memberError != null and param.memberError[0] == 'forbidden'}"
+              th:if="${isPersonalWorkspace != true and param.memberError != null and param.memberError[0] == 'forbidden'}"
             >
               Bạn không có quyền quản lý thành viên trong workspace này.
             </div>
@@ -154,13 +154,13 @@
 
             <div
               class="empty-state"
-              th:if="${!isPersonalWorkspace and param.memberRoleUpdated}"
+              th:if="${isPersonalWorkspace != true and param.memberRoleUpdated != null}"
             >
               Đã cập nhật quyền thành viên.
             </div>
 
             <form
-              th:if="${canManageMembers}"
+              th:if="${canManageMembers == true}"
               th:action="@{'/workspaces/' + ${workspace.id} + '/add-member'}"
               method="post"
               class="form-grid"
@@ -210,7 +210,7 @@
                     th:text="${m.user.email != null ? m.user.email : 'Không có email'}"
                   ></p>
                   <form
-                    th:if="${canManageMembers}"
+                    th:if="${canManageMembers == true}"
                     th:action="@{'/workspaces/' + ${workspace.id} + '/members/' + ${m.id} + '/role'}"
                     method="post"
                     class="mobile-stack"
