@@ -82,19 +82,15 @@ public class ProfileController {
                 return "redirect:/profile";
             }
 
-            Files.createDirectories(AVATAR_DIR);
             String extension = StringUtils.getFilenameExtension(
                     avatarFile.getOriginalFilename() == null ? "avatar.png" : avatarFile.getOriginalFilename());
             String safeExtension = extension == null || extension.isBlank() ? "png"
                     : extension.toLowerCase(Locale.ROOT);
             String storedFilename = UUID.randomUUID() + "." + safeExtension;
-            Path targetFile = AVATAR_DIR.resolve(storedFilename);
-            avatarFile.transferTo(targetFile);
 
             user.setAvatarFilename(storedFilename);
             user.setAvatarContentType(contentType);
-            // Do not persist avatar bytes in DB to avoid PostgreSQL LOB read issues.
-            user.setAvatarData(null);
+            user.setAvatarData(avatarFile.getBytes());
         }
 
         userRepository.save(user);
@@ -114,6 +110,23 @@ public class ProfileController {
     }
 
     private ResponseEntity<Resource> avatarForUser(User user) throws IOException {
+        if (user.getAvatarData() != null && user.getAvatarData().length > 0) {
+            MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
+            if (user.getAvatarContentType() != null && !user.getAvatarContentType().isBlank()) {
+                try {
+                    contentType = MediaType.parseMediaType(user.getAvatarContentType());
+                } catch (Exception ignored) {
+                    contentType = MediaType.APPLICATION_OCTET_STREAM;
+                }
+            }
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.noCache())
+                    .contentType(contentType)
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
+                    .body(new ByteArrayResource(user.getAvatarData()));
+        }
+
+        // Backward compatibility for old avatars that only exist on local disk.
         if (user.getAvatarFilename() != null && !user.getAvatarFilename().isBlank()) {
             Path avatarPath = AVATAR_DIR.resolve(user.getAvatarFilename());
             if (Files.exists(avatarPath)) {
