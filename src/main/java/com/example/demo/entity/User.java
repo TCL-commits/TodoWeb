@@ -27,7 +27,7 @@ public class User {
 
     private String avatarContentType;
 
-    @Column(name = "avatar_data", columnDefinition = "bytea")
+    @Transient
     private byte[] avatarData;
 
     private String password;

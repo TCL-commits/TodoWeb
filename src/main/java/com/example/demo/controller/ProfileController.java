@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.User;
+import com.example.demo.entity.UserAvatar;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.UserAvatarRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -36,6 +38,7 @@ public class ProfileController {
     private static final Path AVATAR_DIR = Paths.get("uploads", "avatars");
 
     private final UserRepository userRepository;
+    private final UserAvatarRepository userAvatarRepository;
 
     private User currentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -71,7 +74,9 @@ public class ProfileController {
         user.setEmail(normalizedEmail);
         user.setPhone(phone == null || phone.isBlank() ? null : phone.trim());
 
-        if (avatarFile != null && !avatarFile.isEmpty()) {
+        boolean hasNewAvatar = avatarFile != null && !avatarFile.isEmpty();
+
+        if (hasNewAvatar) {
             String contentType = avatarFile.getContentType() == null ? "" : avatarFile.getContentType();
             if (!contentType.startsWith("image/")) {
                 redirectAttributes.addFlashAttribute("profileError", "Avatar phải là file hình ảnh");
@@ -90,10 +95,19 @@ public class ProfileController {
 
             user.setAvatarFilename(storedFilename);
             user.setAvatarContentType(contentType);
-            user.setAvatarData(avatarFile.getBytes());
         }
 
-        userRepository.save(user);
+        user = userRepository.save(user);
+
+        if (hasNewAvatar) {
+            UserAvatar avatar = userAvatarRepository.findById(user.getId()).orElseGet(UserAvatar::new);
+            avatar.setUserId(user.getId());
+            avatar.setFilename(user.getAvatarFilename());
+            avatar.setContentType(user.getAvatarContentType());
+            avatar.setData(avatarFile.getBytes());
+            userAvatarRepository.save(avatar);
+        }
+
         redirectAttributes.addFlashAttribute("profileSuccess", "Đã cập nhật thông tin cá nhân");
         return "redirect:/profile";
     }
@@ -110,11 +124,12 @@ public class ProfileController {
     }
 
     private ResponseEntity<Resource> avatarForUser(User user) throws IOException {
-        if (user.getAvatarData() != null && user.getAvatarData().length > 0) {
+        UserAvatar dbAvatar = userAvatarRepository.findById(user.getId()).orElse(null);
+        if (dbAvatar != null && dbAvatar.getData() != null && dbAvatar.getData().length > 0) {
             MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
-            if (user.getAvatarContentType() != null && !user.getAvatarContentType().isBlank()) {
+            if (dbAvatar.getContentType() != null && !dbAvatar.getContentType().isBlank()) {
                 try {
-                    contentType = MediaType.parseMediaType(user.getAvatarContentType());
+                    contentType = MediaType.parseMediaType(dbAvatar.getContentType());
                 } catch (Exception ignored) {
                     contentType = MediaType.APPLICATION_OCTET_STREAM;
                 }
@@ -123,7 +138,7 @@ public class ProfileController {
                     .cacheControl(CacheControl.noCache())
                     .contentType(contentType)
                     .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
-                    .body(new ByteArrayResource(user.getAvatarData()));
+                    .body(new ByteArrayResource(dbAvatar.getData()));
         }
 
         // Backward compatibility for old avatars that only exist on local disk.
