@@ -27,7 +27,7 @@ public class User {
 
     private String avatarContentType;
 
-    @Lob
+    @Transient
     private byte[] avatarData;
 
     private String password;

@@ -93,7 +93,8 @@ public class ProfileController {
 
             user.setAvatarFilename(storedFilename);
             user.setAvatarContentType(contentType);
-            user.setAvatarData(avatarFile.getBytes());
+            // Do not persist avatar bytes in DB to avoid PostgreSQL LOB read issues.
+            user.setAvatarData(null);
         }
 
         userRepository.save(user);
@@ -116,11 +117,6 @@ public class ProfileController {
         if (user.getAvatarFilename() != null && !user.getAvatarFilename().isBlank()) {
             Path avatarPath = AVATAR_DIR.resolve(user.getAvatarFilename());
             if (Files.exists(avatarPath)) {
-                if (user.getAvatarData() == null || user.getAvatarData().length == 0) {
-                    // Backfill DB copy for previously uploaded avatars still present on disk.
-                    user.setAvatarData(Files.readAllBytes(avatarPath));
-                    userRepository.save(user);
-                }
                 Resource resource = new org.springframework.core.io.InputStreamResource(
                         Files.newInputStream(avatarPath));
                 MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
@@ -137,22 +133,6 @@ public class ProfileController {
                         .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
                         .body(resource);
             }
-        }
-
-        if (user.getAvatarData() != null && user.getAvatarData().length > 0) {
-            MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
-            if (user.getAvatarContentType() != null && !user.getAvatarContentType().isBlank()) {
-                try {
-                    contentType = MediaType.parseMediaType(user.getAvatarContentType());
-                } catch (Exception ignored) {
-                    contentType = MediaType.APPLICATION_OCTET_STREAM;
-                }
-            }
-            return ResponseEntity.ok()
-                    .cacheControl(CacheControl.noCache())
-                    .contentType(contentType)
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
-                    .body(new ByteArrayResource(user.getAvatarData()));
         }
 
         String label = avatarLabel(user);
