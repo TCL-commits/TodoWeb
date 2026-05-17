@@ -58,6 +58,11 @@
         </div>
 
         <form method="post" action="/register" class="auth-form">
+          <input
+            type="hidden"
+            th:name="${_csrf.parameterName}"
+            th:value="${_csrf.token}"
+          />
           <div class="field">
             <label class="field-label" for="username">Username</label>
             <input

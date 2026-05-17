@@ -1661,7 +1661,7 @@ body.landing-page {
 
   .page-content,
   .board-shell {
-    width: min(100% - 20px, 1280px);
+    width: min(100% - 12px, 1280px);
     padding-inline: 0;
   }
 
@@ -1677,27 +1677,78 @@ body.landing-page {
 
   .board-column,
   .board-add {
-    width: 288px;
-    min-width: 288px;
+    width: calc(100vw - 28px);
+    min-width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px);
   }
 
   .board-columns {
-    padding-right: 6px;
+    padding-right: 0;
   }
 
   .board-bottom-scroll {
-    left: 8px;
-    right: 8px;
-    bottom: 0px;
+    display: none;
+  }
+
+  .board-hero {
+    margin-bottom: 14px;
+  }
+
+  .board-hero-actions,
+  .board-action-group,
+  .board-filter-form {
+    width: 100%;
+  }
+
+  .board-action-group,
+  .board-filter-form,
+  .mobile-stack {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .board-action-group .button,
+  .board-action-group .action-select,
+  .board-filter-form .button,
+  .board-filter-form .action-select,
+  .mobile-stack > * {
+    width: 100%;
+  }
+
+  .board-column-header {
+    padding: 14px 14px 10px;
+  }
+
+  .board-column-cards {
+    padding: 12px;
   }
 
   .modal-main,
   .modal-side {
-    padding: 20px;
+    padding: 16px;
   }
 
   .modal-title-input {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+  }
+
+  .board-modal,
+  .modal {
+    padding: 6px;
+  }
+
+  .board-modal-content,
+  .modal-content {
+    width: min(100%, 100vw - 12px);
+    height: calc(100dvh - 12px);
+    border-radius: 20px;
+  }
+
+  .modal-close {
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
   }
 
   .topbar {
@@ -1812,5 +1863,36 @@ body.landing-page {
 
   .topbar-search input {
     font-size: 0.95rem;
+  }
+
+  .board-hero-main {
+    width: 100%;
+  }
+
+  .board-title {
+    font-size: 1.25rem;
+  }
+
+  .board-subtitle {
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .task-card {
+    padding: 12px;
+  }
+
+  .task-title {
+    font-size: 0.98rem;
+  }
+
+  .task-description {
+    font-size: 0.92rem;
+  }
+
+  .button,
+  button.button,
+  input.button {
+    padding: 10px 12px;
   }
 }
