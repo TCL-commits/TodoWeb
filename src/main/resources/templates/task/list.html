@@ -440,20 +440,17 @@
                 id="chatMessages"
                 style="max-height: 200px; overflow: auto"
               ></div>
-              <div style="display: flex; gap: 8px">
+              <form id="chatForm" style="display: flex; gap: 8px">
                 <input
                   id="chatInput"
                   type="text"
                   placeholder="Gửi tin nhắn tới project"
                   style="flex: 1"
                 />
-                <button
-                  class="button button-secondary"
-                  onclick="postChatMessage()"
-                >
+                <button class="button button-secondary" type="submit">
                   Gửi
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </aside>
@@ -1094,16 +1091,28 @@
 
       // --- Simple project chat helpers ---
       let currentChannelId = null;
+      let chatChannelsPromise = null;
 
       function loadProjectChat() {
-        fetch(`/projects/${projectId}/chat/channels`)
+        if (chatChannelsPromise) {
+          return chatChannelsPromise;
+        }
+
+        chatChannelsPromise = fetch(`/projects/${projectId}/chat/channels`)
           .then((res) => res.json())
           .then((channels) => {
             if (!channels || !channels.length) return;
             // pick first channel as default
             currentChannelId = channels[0].id;
             loadChatMessages(currentChannelId);
+            return currentChannelId;
+          })
+          .catch((err) => {
+            chatChannelsPromise = null;
+            throw err;
           });
+
+        return chatChannelsPromise;
       }
 
       function loadChatMessages(channelId) {
@@ -1130,11 +1139,26 @@
           });
       }
 
-      function postChatMessage() {
+      async function postChatMessage() {
+        if (!currentChannelId) {
+          try {
+            await loadProjectChat();
+          } catch (err) {
+            console.error("Failed to load project chat:", err);
+            return;
+          }
+        }
+
         if (!currentChannelId) return;
         const input = document.getElementById("chatInput");
         const content = (input.value || "").trim();
         if (!content) return;
+
+        const submitButton = document.querySelector("#chatForm button");
+        if (submitButton) {
+          submitButton.disabled = true;
+        }
+
         fetch(
           `/projects/${projectId}/chat/channels/${currentChannelId}/messages`,
           {
@@ -1142,14 +1166,23 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ content }),
           },
-        ).then(() => {
-          input.value = "";
-          loadChatMessages(currentChannelId);
-          // keep focus for rapid messages on mobile
-          try {
-            input.focus();
-          } catch (e) {}
-        });
+        )
+          .then(() => {
+            input.value = "";
+            loadChatMessages(currentChannelId);
+            // keep focus for rapid messages on mobile
+            try {
+              input.focus();
+            } catch (e) {}
+          })
+          .catch((err) => {
+            console.error("Failed to send chat message:", err);
+          })
+          .finally(() => {
+            if (submitButton) {
+              submitButton.disabled = false;
+            }
+          });
       }
 
       // initialize chat on page load
@@ -1157,14 +1190,11 @@
         // load chat channels early
         loadProjectChat();
 
-        // wire Enter key on chat input to send message
-        const chatInput = document.getElementById("chatInput");
-        if (chatInput) {
-          chatInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              postChatMessage();
-            }
+        const chatForm = document.getElementById("chatForm");
+        if (chatForm) {
+          chatForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            postChatMessage();
           });
         }
       });
