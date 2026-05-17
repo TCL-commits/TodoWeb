@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Table(name = "channels")
+@Table(name = "channels", indexes = { @Index(name = "idx_channel_project", columnList = "project_id") })
 public class Channel {
 
     @Id
@@ -17,6 +17,10 @@ public class Channel {
     private String name;
 
     private String slug;
+
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project;
 
     private LocalDateTime createdAt;
 
