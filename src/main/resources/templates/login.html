@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | Think-Calc-Loop</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
     <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
   </head>
@@ -20,23 +22,23 @@
             <span class="auth-badge">Think-Calc-Loop</span>
           </div>
           <h1 class="auth-title">
-            Work like a Trello board, but tailored for your flow.
+            Work like a product team, with one clear place to plan and ship.
           </h1>
           <p class="auth-copy">
             Đăng nhập để quản lý workspace, project và task trong giao diện gọn,
-            hiện đại và dễ theo dõi.
+            hiện đại, an toàn và hướng sản phẩm hơn.
           </p>
         </div>
 
         <div class="auth-points">
           <div class="auth-point">
-            <span>1</span><span>Quản lý workspace rõ ràng</span>
+            <span>1</span><span>Quản lý workspace và dự án rõ ràng</span>
           </div>
           <div class="auth-point">
-            <span>2</span><span>Kéo thả task giữa các list</span>
+            <span>2</span><span>Kéo thả task giữa các trạng thái</span>
           </div>
           <div class="auth-point">
-            <span>3</span><span>Mở board và cập nhật nhanh</span>
+            <span>3</span><span>Mở dashboard và cập nhật nhanh</span>
           </div>
         </div>
       </aside>
@@ -85,5 +87,6 @@
         </form>
       </section>
     </div>
+    <script th:src="@{/js/app.js}"></script>
   </body>
 </html>

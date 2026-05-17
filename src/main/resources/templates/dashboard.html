@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard | Think-Calc-Loop</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
     <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
   </head>
@@ -14,7 +16,7 @@
           <span class="brand-mark">T</span>
           <span class="brand-text">
             <span>Think-Calc-Loop</span>
-            <small>Trello-style workspace</small>
+            <small>Product command center</small>
           </span>
         </a>
 
@@ -64,14 +66,15 @@
       <main class="page-content">
         <section class="hero">
           <div class="hero-card">
-            <div class="hero-kicker">Personal dashboard</div>
+            <div class="hero-kicker">Product overview</div>
             <h1 class="hero-title">
-              Tổ chức mọi công việc theo kiểu board gọn, nhanh, rõ.
+              Một nơi duy nhất để xem tiến độ, ưu tiên và trạng thái làm việc.
             </h1>
             <p class="hero-copy">
-              Quản lý workspace, project và task trong một giao diện sáng sủa,
-              dễ đọc và rất gần với Trello. Mọi thao tác đều được đặt ở vị trí
-              rõ ràng để bạn làm việc nhanh hơn.
+              Think-Calc-Loop gom workspace, project, task, thông báo và số liệu
+              vận hành vào một màn hình chính rõ ràng. Giao diện được viết lại
+              theo hướng giới thiệu sản phẩm thật sự, không còn ngôn ngữ board
+              cũ.
             </p>
 
             <div class="hero-actions">
@@ -79,25 +82,25 @@
                 >Tạo workspace mới</a
               >
               <a class="button button-secondary" th:href="@{/workspaces}"
-                >Xem toàn bộ workspace</a
+                >Xem tất cả workspace</a
               >
             </div>
           </div>
 
           <aside class="hero-stats">
             <div class="stat-card">
-              <div class="stat-label">Xin chào</div>
+              <div class="stat-label">Chào mừng trở lại</div>
               <div class="stat-value" th:text="${username}"></div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Workspace của bạn</div>
+              <div class="stat-label">Workspace đang theo dõi</div>
               <div
                 class="stat-value"
                 th:text="${#lists.size(workspaces)}"
               ></div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Total tasks</div>
+              <div class="stat-label">Tổng task</div>
               <div class="stat-value" th:text="${totalTasks}"></div>
             </div>
           </aside>
@@ -108,7 +111,7 @@
             <div class="workspace-chip">
               <span>Report</span><span>Weekly</span>
             </div>
-            <h3 class="project-title">Tasks completed</h3>
+            <h3 class="project-title">Task đã hoàn thành</h3>
             <p
               class="project-copy"
               th:text="${completedTasks} + ' task đã hoàn thành.'"
@@ -118,7 +121,7 @@
             <div class="workspace-chip">
               <span>Report</span><span>Risk</span>
             </div>
-            <h3 class="project-title">Overdue</h3>
+            <h3 class="project-title">Cần xử lý ngay</h3>
             <p
               class="project-copy"
               th:text="${overdueTasks} + ' task quá hạn cần xử lý.'"
@@ -181,7 +184,7 @@
             <div>
               <h2 class="section-title">Workspace gần đây</h2>
               <p class="section-subtitle">
-                Chọn một workspace để mở project và board.
+                Chọn một workspace để mở project, task và số liệu vận hành.
               </p>
             </div>
             <a class="soft-link" th:href="@{/workspaces}"
@@ -197,15 +200,15 @@
               </div>
               <h3 class="workspace-title" th:text="${ws.name}"></h3>
               <p class="workspace-copy">
-                Không gian làm việc để gom project, task và trạng thái theo một
-                board thống nhất.
+                Không gian làm việc để gom project, task và trạng thái trong một
+                hệ thống thống nhất.
               </p>
               <div class="card-actions">
                 <span class="muted">Ready to open</span>
                 <a
                   class="card-link"
                   th:href="@{'/workspaces/' + ${ws.id} + '/projects'}"
-                  >Open board</a
+                  >Open workspace</a
                 >
               </div>
             </article>
@@ -227,5 +230,6 @@
         }
       }
     </script>
+    <script th:src="@{/js/app.js}"></script>
   </body>
 </html>

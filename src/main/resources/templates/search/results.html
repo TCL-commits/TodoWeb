@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Search | Think-Calc-Loop</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
     <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
   </head>
@@ -133,7 +135,7 @@
                 <a
                   class="card-link"
                   th:href="@{'/projects/' + ${p.id} + '/tasks'}"
-                  >Open board</a
+                  >Open project</a
                 >
               </div>
             </article>
@@ -171,7 +173,7 @@
                 <a
                   class="card-link"
                   th:href="@{'/projects/' + ${t.project.id} + '/tasks'}"
-                  >Open board</a
+                  >Open project</a
                 >
               </div>
             </article>
@@ -182,5 +184,6 @@
         </section>
       </main>
     </div>
+    <script th:src="@{/js/app.js}"></script>
   </body>
 </html>

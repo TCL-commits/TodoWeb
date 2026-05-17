@@ -832,6 +832,101 @@ textarea {
   font-weight: 700;
 }
 
+body.landing-page {
+  display: block;
+  padding: 0;
+}
+
+.landing-shell {
+  width: min(1200px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 32px 0 52px;
+  display: grid;
+  gap: 24px;
+}
+
+.landing-hero,
+.landing-showcase {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05)
+  );
+  box-shadow: var(--shadow-lg);
+}
+
+.landing-hero {
+  padding: 34px;
+  display: grid;
+  gap: 28px;
+}
+
+.landing-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.landing-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.landing-copy {
+  max-width: 860px;
+}
+
+.landing-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metric-card {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.metric-card .stat-value {
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.landing-showcase {
+  padding: 28px 34px 34px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.feature-card {
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.feature-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
 .workspace-list,
 .project-list {
   display: grid;

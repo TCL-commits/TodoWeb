@@ -1,0 +1,108 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Think-Calc-Loop | Work management that feels like a product</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
+  </head>
+  <body class="auth-page landing-page">
+    <main class="landing-shell">
+      <section class="landing-hero">
+        <div class="landing-brand-row">
+          <div class="auth-identity">
+            <img
+              class="auth-logo"
+              th:src="@{'/icons/logoTCLS.png?v=' + ${logoVersion}}"
+              alt="Think-Calc-Loop logo"
+            />
+            <span class="auth-badge">Think-Calc-Loop</span>
+          </div>
+          <div class="landing-actions">
+            <a class="button button-secondary" th:href="@{/login}">Đăng nhập</a>
+            <a class="button button-primary" th:href="@{/register}"
+              >Tạo tài khoản</a
+            >
+          </div>
+        </div>
+
+        <div class="landing-copy">
+          <p class="hero-kicker">Product workspace</p>
+          <h1 class="hero-title">
+            Một không gian làm việc rõ ràng cho team, dự án và tiến độ.
+          </h1>
+          <p class="hero-copy">
+            Think-Calc-Loop giúp bạn quản lý workspace, project, task, nhắc việc
+            và trạng thái vận hành trong một giao diện gọn, sang và dễ mở rộng
+            cho sản phẩm thực tế.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" th:href="@{/register}"
+              >Bắt đầu miễn phí</a
+            >
+            <a class="button button-secondary" th:href="@{/login}"
+              >Xem trải nghiệm đăng nhập</a
+            >
+          </div>
+        </div>
+
+        <div class="landing-metrics">
+          <article class="metric-card">
+            <div class="stat-label">Planning</div>
+            <div class="stat-value">Sprint, planning flow, dependencies</div>
+          </article>
+          <article class="metric-card">
+            <div class="stat-label">Collaboration</div>
+            <div class="stat-value">Members, mentions, activity feed</div>
+          </article>
+          <article class="metric-card">
+            <div class="stat-label">Operations</div>
+            <div class="stat-value">Archive, recurring task, time tracking</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="landing-showcase">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">
+              Được thiết kế như một sản phẩm, không phải một bảng công việc thô
+            </h2>
+            <p class="section-subtitle">
+              Giao diện ưu tiên kể câu chuyện sản phẩm, làm rõ giá trị và dẫn
+              người dùng tới hành động chính.
+            </p>
+          </div>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card">
+            <h3>Điều hướng theo ngữ cảnh</h3>
+            <p>
+              Dashboard, workspace, project và task đều được sắp xếp theo luồng
+              sử dụng thực tế của người dùng.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Nhấn mạnh giá trị sản phẩm</h3>
+            <p>
+              Metric, CTA và nội dung mô tả được viết lại để trông như trang
+              giới thiệu một công cụ thật sự.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Đủ nền để mở rộng</h3>
+            <p>
+              Base security, CSRF, session hardening và các API hiện có đều được
+              giữ sẵn để tiếp tục phát triển.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+    <script th:src="@{/js/app.js}"></script>
+  </body>
+</html>

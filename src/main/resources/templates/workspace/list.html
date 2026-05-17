@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Workspaces | Think-Calc-Loop</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
     <link rel="icon" type="image/png" th:href="@{/icons/logoTCLS.png}" />
   </head>
@@ -76,12 +78,12 @@
             <article class="workspace-card" th:each="ws : ${workspaces}">
               <div class="workspace-chip">
                 <span th:text="${ws.type != null ? ws.type : 'TEAM'}"></span>
-                <span>Board space</span>
+                <span>Product space</span>
               </div>
               <h3 class="workspace-title" th:text="${ws.name}"></h3>
               <p class="workspace-copy">
                 Quản lý project, task và trạng thái trong một không gian làm
-                việc gọn gàng.
+                việc gọn gàng và có định hướng sản phẩm.
               </p>
               <div class="card-actions">
                 <span class="muted">Sẵn sàng mở</span>
@@ -100,5 +102,6 @@
         </section>
       </main>
     </div>
+    <script th:src="@{/js/app.js}"></script>
   </body>
 </html>

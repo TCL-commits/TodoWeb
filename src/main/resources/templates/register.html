@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register | Think-Calc-Loop</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <link rel="stylesheet" href="/css/app.css" />
     <link rel="icon" type="image/png" href="/icons/logoTCLS.png" />
   </head>
@@ -16,11 +18,11 @@
             <span class="auth-badge">Think-Calc-Loop</span>
           </div>
           <h1 class="auth-title">
-            Bắt đầu một workspace được sắp xếp như Trello.
+            Bắt đầu một workspace được đóng gói như một sản phẩm thật.
           </h1>
           <p class="auth-copy">
-            Tạo tài khoản để quản lý dự án, chia list theo trạng thái và mở
-            board theo phong cách hiện đại.
+            Tạo tài khoản để quản lý dự án, chia task theo trạng thái và mở
+            workspace theo phong cách hiện đại.
           </p>
         </div>
 
@@ -99,5 +101,6 @@
         </form>
       </section>
     </div>
+    <script th:src="@{/js/app.js}"></script>
   </body>
 </html>
