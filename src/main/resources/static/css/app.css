@@ -1489,6 +1489,25 @@ body.landing-page {
   min-height: 0;
 }
 
+/* Mobile / touch scrolling improvements for modals and chat */
+.board-modal,
+.modal {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.modal-main,
+.modal-side {
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100vh - 140px);
+}
+
+/* Chat messages container touch-friendly */
+#chatMessages {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 .modal-close {
   position: absolute;
   top: 18px;

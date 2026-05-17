@@ -737,6 +737,12 @@
             loadComments(taskId);
             loadActivities(taskId);
             loadAttachments(taskId);
+            // ensure project chat channels are available when modal is opened
+            try {
+              loadProjectChat();
+            } catch (e) {
+              /* ignore */
+            }
           })
           .catch((err) => console.error("Failed to load task data:", err));
       }
@@ -1117,7 +1123,10 @@
               el.innerHTML = `<strong>${m.author}</strong>: ${m.content}`;
               container.appendChild(el);
             });
-            container.scrollTop = container.scrollHeight;
+            // ensure we scroll after layout; small delay helps on mobile browsers
+            setTimeout(() => {
+              container.scrollTop = container.scrollHeight;
+            }, 40);
           });
       }
 
@@ -1136,12 +1145,28 @@
         ).then(() => {
           input.value = "";
           loadChatMessages(currentChannelId);
+          // keep focus for rapid messages on mobile
+          try {
+            input.focus();
+          } catch (e) {}
         });
       }
 
       // initialize chat on page load
       document.addEventListener("DOMContentLoaded", () => {
+        // load chat channels early
         loadProjectChat();
+
+        // wire Enter key on chat input to send message
+        const chatInput = document.getElementById("chatInput");
+        if (chatInput) {
+          chatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              postChatMessage();
+            }
+          });
+        }
       });
 
       function uploadAttachment() {
@@ -1379,27 +1404,37 @@
         }
       });
 
-      document.querySelectorAll(".board-column-cards").forEach((column) => {
-        new Sortable(column, {
-          group: "shared",
-          animation: 160,
-          ghostClass: "opacity-50",
-          onEnd: function (event) {
-            const taskId = event.item.dataset.id;
-            const statusId = event.to.id;
+      // Initialize Sortable and bottom scrollbar only on larger screens
+      if (window.innerWidth > 760) {
+        document.querySelectorAll(".board-column-cards").forEach((column) => {
+          new Sortable(column, {
+            group: "shared",
+            animation: 160,
+            ghostClass: "opacity-50",
+            onEnd: function (event) {
+              const taskId = event.item.dataset.id;
+              const statusId = event.to.id;
 
-            fetch(
-              `/projects/${projectId}/tasks/${taskId}/move?statusId=${statusId}`,
-              { method: "POST" },
-            ).catch((err) => {
-              console.error("Failed to move task:", err);
-              window.location.reload();
-            });
-          },
+              fetch(
+                `/projects/${projectId}/tasks/${taskId}/move?statusId=${statusId}`,
+                { method: "POST" },
+              ).catch((err) => {
+                console.error("Failed to move task:", err);
+                window.location.reload();
+              });
+            },
+          });
         });
-      });
 
-      initBottomScrollbar();
+        initBottomScrollbar();
+      } else {
+        // On small screens we avoid heavy drag listeners and enable touch scroll optimizations
+        document.querySelectorAll(".board-column-cards").forEach((c) => {
+          c.style.overflowY = "auto";
+          c.style.maxHeight = "calc(100vh - 220px)";
+          c.style["-webkit-overflow-scrolling"] = "touch";
+        });
+      }
     </script>
     <script th:src="@{/js/app.js}"></script>
   </body>
