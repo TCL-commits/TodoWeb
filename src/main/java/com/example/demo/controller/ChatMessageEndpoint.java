@@ -60,7 +60,7 @@ public class ChatMessageEndpoint {
 
         // broadcast to topic for this project/channel
         String destination = String.format("/topic/projects.%d.channels.%d", projectId, channelId);
-        messagingTemplate.convertAndSend(destination, out);
+        messagingTemplate.convertAndSend(destination, (Object) out);
 
         // notify mentions (creates Notification rows)
         mentionService.notifyMentionsForProject(channel.getProject(), getCurrentUser(), msg.getContent());
