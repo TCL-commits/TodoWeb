@@ -430,6 +430,32 @@
             <p class="muted" style="margin: 0 0 8px">Activity feed</p>
             <div id="activityFeed"></div>
           </div>
+          <div class="activity-card" style="margin-top: 14px">
+            <p class="muted" style="margin: 0 0 8px">Project Chat</p>
+            <div
+              id="projectChat"
+              style="display: flex; flex-direction: column; gap: 8px"
+            >
+              <div
+                id="chatMessages"
+                style="max-height: 200px; overflow: auto"
+              ></div>
+              <div style="display: flex; gap: 8px">
+                <input
+                  id="chatInput"
+                  type="text"
+                  placeholder="Gửi tin nhắn tới project"
+                  style="flex: 1"
+                />
+                <button
+                  class="button button-secondary"
+                  onclick="postChatMessage()"
+                >
+                  Gửi
+                </button>
+              </div>
+            </div>
+          </div>
         </aside>
       </div>
     </div>
@@ -1059,6 +1085,64 @@
             );
           });
       }
+
+      // --- Simple project chat helpers ---
+      let currentChannelId = null;
+
+      function loadProjectChat() {
+        fetch(`/projects/${projectId}/chat/channels`)
+          .then((res) => res.json())
+          .then((channels) => {
+            if (!channels || !channels.length) return;
+            // pick first channel as default
+            currentChannelId = channels[0].id;
+            loadChatMessages(currentChannelId);
+          });
+      }
+
+      function loadChatMessages(channelId) {
+        fetch(`/projects/${projectId}/chat/channels/${channelId}/messages`)
+          .then((res) => res.json())
+          .then((rows) => {
+            const container = document.getElementById("chatMessages");
+            container.innerHTML = "";
+            if (!rows || !rows.length) {
+              container.innerHTML =
+                '<div class="muted">Chưa có tin nhắn.</div>';
+              return;
+            }
+            rows.reverse().forEach((m) => {
+              const el = document.createElement("div");
+              el.style.padding = "6px 0";
+              el.innerHTML = `<strong>${m.author}</strong>: ${m.content}`;
+              container.appendChild(el);
+            });
+            container.scrollTop = container.scrollHeight;
+          });
+      }
+
+      function postChatMessage() {
+        if (!currentChannelId) return;
+        const input = document.getElementById("chatInput");
+        const content = (input.value || "").trim();
+        if (!content) return;
+        fetch(
+          `/projects/${projectId}/chat/channels/${currentChannelId}/messages`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+          },
+        ).then(() => {
+          input.value = "";
+          loadChatMessages(currentChannelId);
+        });
+      }
+
+      // initialize chat on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        loadProjectChat();
+      });
 
       function uploadAttachment() {
         if (!currentTaskId) return;
