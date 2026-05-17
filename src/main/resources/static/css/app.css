@@ -1453,12 +1453,14 @@ body.landing-page {
   padding: 24px;
   background: rgba(2, 6, 23, 0.62);
   backdrop-filter: blur(10px);
+  overflow-y: auto;
 }
 
 .board-modal-content,
 .modal-content {
   width: min(980px, 100%);
-  max-height: calc(100vh - 48px);
+  height: min(calc(100vh - 48px), 980px);
+  min-height: 0;
   overflow: hidden;
   border-radius: 28px;
   background: linear-gradient(180deg, #111827, #0b1220);
@@ -1476,6 +1478,7 @@ body.landing-page {
 .modal-main {
   padding: 28px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .modal-side {
@@ -1483,6 +1486,7 @@ body.landing-page {
   border-left: 1px solid rgba(148, 163, 184, 0.12);
   background: rgba(8, 15, 30, 0.74);
   overflow-y: auto;
+  min-height: 0;
 }
 
 .modal-close {
