@@ -4,12 +4,19 @@ Think-Calc-Loop is a Spring Boot + Thymeleaf task board application for managing
 
 ## Features
 
-- Workspace and project management
-- Kanban-style task board
-- Task members, comments, attachments, checklist, and due dates
-- User profile page with avatar upload
+- Landing, login, and register pages
+- Dashboard with workspace overview, task stats, and recent notifications
+- Workspace management, including create workspace and member management
+- Project management with templates for kanban, sprint, and marketing flows
+- Kanban-style task board with task filters and drag/move actions
+- Task details with members, comments, attachments, checklist, due dates, notes, and completion toggle
+- Task assignment by member email, including auto-adding a workspace member when needed
+- Search across workspaces, projects, and tasks with advanced query filters
+- User profile page with avatar upload and contact info updates
 - Automatic avatar fallback when a user has no uploaded image
-- Notifications and activity tracking
+- Notifications, activity tracking, audit log export, and realtime updates
+- Workspace export/import and task archive/recycle-bin handling
+- Advanced planning features such as sprints, burndown, dependencies, custom fields, time tracking, approval, and quality reports
 
 ## Requirements
 
