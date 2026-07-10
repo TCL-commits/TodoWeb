@@ -2,9 +2,11 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.Channel;
 import com.example.demo.entity.ChannelMessage;
+import com.example.demo.entity.Project;
 import com.example.demo.entity.User;
 import com.example.demo.repository.ChannelMessageRepository;
 import com.example.demo.repository.ChannelRepository;
+import com.example.demo.repository.ProjectRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ public class ProjectChatController {
 
     private final ChannelRepository channelRepository;
     private final ChannelMessageRepository messageRepository;
+    private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
 
     private User getCurrentUser() {
@@ -32,21 +35,25 @@ public class ProjectChatController {
 
     @GetMapping("/channels")
     @ResponseBody
-    public List<Channel> listChannels(@PathVariable Long projectId) {
+    public List<Map<String, Object>> listChannels(@PathVariable Long projectId) {
         List<Channel> channels = channelRepository.findByProjectId(projectId);
         if (channels == null || channels.isEmpty()) {
+            Project project = projectRepository.findById(projectId).orElseThrow();
             Channel c = new Channel();
             c.setName("General");
             c.setSlug("general-" + projectId);
-            // set project association lazily by id only (JPA will handle reference when
-            // persisted)
-            com.example.demo.entity.Project p = new com.example.demo.entity.Project();
-            p.setId(projectId);
-            c.setProject(p);
+            c.setProject(project);
             channelRepository.save(c);
             channels = List.of(c);
         }
-        return channels;
+
+        return channels.stream().map(channel -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", channel.getId());
+            row.put("name", channel.getName());
+            row.put("slug", channel.getSlug());
+            return row;
+        }).toList();
     }
 
     @GetMapping("/channels/{channelId}/messages")
