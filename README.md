@@ -24,11 +24,12 @@ Think-Calc-Loop is a Spring Boot + Thymeleaf task board application for managing
 
 - Java 21
 - Maven 3.9+ or the included Maven wrapper
-- SQL Server configured through `src/main/resources/application.properties`
+- PostgreSQL database hosted on Neon or another PostgreSQL provider
+- Render environment variables for `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD`
 
 ## Run Locally
 
-1. Configure the database connection in `src/main/resources/application.properties`.
+1. Configure the database connection in `src/main/resources/application.properties` or export the Neon connection variables in your shell.
 2. Start the application:
 
 ```bash
@@ -45,8 +46,20 @@ Run the test suite with:
 ./mvnw test
 ```
 
+## Deploy on Render
+
+1. Create a Render Web Service from this repository.
+2. Set the build command to `./mvnw clean package -DskipTests`.
+3. Set the start command to `java -jar target/demo-0.0.1-SNAPSHOT.jar`.
+4. Add the Neon PostgreSQL connection values as environment variables:
+   - `SPRING_DATASOURCE_URL`
+   - `SPRING_DATASOURCE_USERNAME`
+   - `SPRING_DATASOURCE_PASSWORD`
+5. Keep `PORT` unset unless you want Render to inject a custom port; the app already defaults to `8080` when `PORT` is missing.
+
 ## Notes
 
 - Login and branding assets are served from `src/main/resources/static/icons`.
 - Uploaded avatars are stored under `uploads/avatars`.
 - If a user has no avatar, the app renders generated initials instead.
+- The app uses PostgreSQL/Hibernate schema auto-update, so make sure Neon is reachable before the first startup.
